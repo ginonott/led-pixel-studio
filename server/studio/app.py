@@ -6,7 +6,7 @@ from flask_cors import CORS
 from .scene_player import player
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+cors = CORS(app, resources={r"*": {"origins": "*"}})
 
 SceneQueryResult = namedtuple("Scene", ["id", "data"])
 

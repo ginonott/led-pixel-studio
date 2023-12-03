@@ -3,11 +3,7 @@ import { CurrentScene, Scene } from "./models";
 import { revalidatePath } from "next/cache";
 
 function getHostName() {
-  if (typeof window === "undefined") {
-    return "127.0.0.1";
-  }
-
-  return window.location.hostname;
+  return "192.168.86.103:5000";
 }
 
 function fetchIt<T>(
@@ -15,7 +11,7 @@ function fetchIt<T>(
   fetchOptions: RequestInit = {},
   data?: object
 ): Promise<T> {
-  const url = `http://${getHostName()}:5000/api${path}`;
+  const url = `http://${getHostName()}/api${path}`;
   console.log("API URL", url);
   return fetch(url, {
     ...fetchOptions,
