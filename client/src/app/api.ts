@@ -7,7 +7,7 @@ function getHostName() {
     return `${window.location.host}:5000`;
   }
 
-  return "localhost:5000";
+  return "127.0.0.1:5000";
 }
 
 function fetchIt<T>(
