@@ -3,7 +3,11 @@ import { CurrentScene, Scene } from "./models";
 import { revalidatePath } from "next/cache";
 
 function getHostName() {
-  return "192.168.86.103:5000";
+  if (typeof window !== "undefined") {
+    return `${window.location.host}:3000`;
+  }
+
+  return "localhost:3000";
 }
 
 function fetchIt<T>(
@@ -105,7 +109,7 @@ export async function stopScene(): Promise<void> {
 
 async function setFrame(sceneId: string, frameNum: number): Promise<void> {
   await fetchIt(
-    `/player/set-frame`,
+    `/player/show-frame`,
     {
       method: "POST",
     },
