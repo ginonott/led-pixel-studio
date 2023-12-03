@@ -11,12 +11,11 @@ except ImportError:
     import studio.stubs.board as board
     import studio.stubs.neopixel as neopixel
 
+leds = 50
+pixels = neopixel.NeoPixel(board.D18, 50, brightness=0.2, auto_write=False)
 
-def set_frame(
-    frame: Frame, leds: int, pixels: list[tuple[int, int, int]], clear_previous=True
-):
-    pixels = neopixel.NeoPixel(board.D18, leds)
 
+def set_frame(frame: Frame, clear_previous=True):
     # set all pixels to black to start
     if clear_previous:
         pixels.fill((0, 0, 0))
@@ -28,15 +27,14 @@ def set_frame(
         else:
             pixels[led_num] = (0, 0, 0)
 
+    pixels.show()
+
 
 def clear_pixels(leds: int):
-    pixels = neopixel.NeoPixel(board.D18, leds)
     pixels.fill((0, 0, 0))
 
 
 def scene_loop(frames: list[Frame], leds: int, fps: int):
-    pixels = neopixel.NeoPixel(board.D18, leds)
-
     # set all pixels to black to start
     pixels.fill((0, 0, 0))
 
@@ -54,8 +52,6 @@ def scene_loop(frames: list[Frame], leds: int, fps: int):
 
 
 def show_frame(frame: Frame, leds: int):
-    pixels = neopixel.NeoPixel(board.D18, leds)
-
     # set all pixels to black to start
     pixels.fill((0, 0, 0))
 
