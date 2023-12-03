@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 
 function getHostName() {
   if (typeof window !== "undefined") {
-    return `${window.location.host}:3000`;
+    return `${window.location.host}:5000`;
   }
 
-  return "localhost:3000";
+  return "localhost:5000";
 }
 
 function fetchIt<T>(
