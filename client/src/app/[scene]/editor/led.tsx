@@ -13,11 +13,13 @@ export default function Led({
   ledState,
   isPrimarySelected,
   isSecondarySelected,
+  ledNumber,
 }: {
   ledState: LedState;
   ledPosition: LedPosition;
   isPrimarySelected: boolean;
   isSecondarySelected: boolean;
+  ledNumber: string;
 }) {
   const on = isOn(ledState);
 
@@ -39,6 +41,10 @@ export default function Led({
         left: `${ledPosition.relX}%`,
         top: `${ledPosition.relY}%`,
       }}
-    />
+    >
+      <div className="relative w-full h-full">
+        <div className="absolute top-[1.5rem] w-full h-full">{ledNumber}</div>
+      </div>
+    </div>
   );
 }

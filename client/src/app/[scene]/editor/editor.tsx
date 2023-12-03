@@ -52,6 +52,7 @@ function Canvas({
               ledState={ledState}
               isPrimarySelected={led === primarySelectedLED}
               isSecondarySelected={secondarySelectedLEDs.includes(led)}
+              ledNumber={led}
             />
           );
         }
@@ -67,6 +68,7 @@ function Canvas({
               ledState={ledState}
               isPrimarySelected={led === primarySelectedLED}
               isSecondarySelected={secondarySelectedLEDs.includes(led)}
+              ledNumber={led}
             />
           </Draggable>
         );
