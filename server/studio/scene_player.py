@@ -1,4 +1,4 @@
-from multiprocessing import Process
+from multiprocessing import Process, Value
 from time import sleep
 from .models import Frame, Scene
 from .debug import debug
@@ -29,14 +29,19 @@ def set_frame(
             pixels[led_num] = (0, 0, 0)
 
 
-def scene_loop(frames: list[Frame], leds: int, fps: int):
+def clear_pixels(leds: int):
+    pixels = neopixel.NeoPixel(board.D18, leds)
+    pixels.fill((0, 0, 0))
+
+
+def scene_loop(is_playing: bool, frames: list[Frame], leds: int, fps: int):
     pixels = neopixel.NeoPixel(board.D18, leds)
 
     # set all pixels to black to start
     pixels.fill((0, 0, 0))
 
     cur_frame = 0
-    while True:
+    while is_playing:
         if cur_frame >= len(frames):
             cur_frame = 0
 
@@ -46,6 +51,8 @@ def scene_loop(frames: list[Frame], leds: int, fps: int):
         cur_frame += 1
 
         sleep(1 / fps)
+
+    pixels.fill((0, 0, 0))
 
 
 def show_frame(frame: Frame, leds: int):
@@ -61,12 +68,13 @@ class ScenePlayer:
     _is_playing: bool
     _proc: Process | None
     _current_scene_id: int | None
+    _pixel_cnt = 0
 
     def _get_num_leds(self, scene: Scene):
         return len(scene["ledPositions"].keys())
 
     def __init__(self):
-        self._is_playing = False
+        self._is_playing = Value("b", False)
         self._current_scene_id = None
         self._proc = None
 
@@ -75,16 +83,17 @@ class ScenePlayer:
 
         self._is_playing = True
         self._current_scene_id = scene["id"]
+        self._pixel_cnt = self._get_num_leds(scene)
         self._proc = Process(
             target=scene_loop,
-            args=(scene["frames"], self._get_num_leds(scene), scene["fps"]),
+            args=(scene["frames"], self._pixel_cnt, scene["fps"]),
         )
         self._proc.start()
 
     def stop_scene(self):
         if self._proc:
-            self._proc.terminate()
-            self._proc.join()
+            self._is_playing = False
+            self._proc.join(timeout=0.5)
             self._proc = None
 
         self._is_playing = False
@@ -97,6 +106,7 @@ class ScenePlayer:
                 self._is_playing = False
                 self._current_scene_id = None
                 self._proc = None
+                clear_pixels(self._pixel_cnt)
 
     def show_frame(self, scene: Scene, frame_num: int):
         # stop the current scene if it's playing
