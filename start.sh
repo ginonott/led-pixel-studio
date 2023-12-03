@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 function cleanup {
-    echo "Killing $1 $2"
+    echo "Exiting..."
 
     kill $1 $2
 }
@@ -10,7 +10,7 @@ npm run build && npm run start &
 CLIENT_SERVER=$!
 
 cd ../server
-FLASK_APP=studio.app.py flask run &
+FLASK_APP=studio.app.py flask run -h 0.0.0.0 &
 API_SERVER=$!
 
 # kill proceses on exit
