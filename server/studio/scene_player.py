@@ -30,11 +30,11 @@ def set_frame(frame: Frame, clear_previous=True):
     pixels.show()
 
 
-def clear_pixels(leds: int):
+def clear_pixels():
     pixels.fill((0, 0, 0))
 
 
-def scene_loop(frames: list[Frame], leds: int, fps: int):
+def scene_loop(frames: list[Frame], fps: int):
     # set all pixels to black to start
     pixels.fill((0, 0, 0))
 
@@ -44,28 +44,24 @@ def scene_loop(frames: list[Frame], leds: int, fps: int):
             cur_frame = 0
 
         debug(f"showing frame {cur_frame}")
-        set_frame(frames[cur_frame], leds, pixels, clear_previous=False)
+        set_frame(frames[cur_frame], clear_previous=False)
 
         cur_frame += 1
 
         sleep(1 / fps)
 
 
-def show_frame(frame: Frame, leds: int):
+def show_frame(frame: Frame):
     # set all pixels to black to start
     pixels.fill((0, 0, 0))
 
-    set_frame(frame, leds, pixels, clear_previous=True)
+    set_frame(frame, clear_previous=True)
 
 
 class ScenePlayer:
     _is_playing: bool
     _proc: Process | None
     _current_scene_id: int | None
-    _pixel_cnt = 0
-
-    def _get_num_leds(self, scene: Scene):
-        return len(scene["ledPositions"].keys())
 
     def __init__(self):
         self._is_playing = False
@@ -77,12 +73,10 @@ class ScenePlayer:
 
         self._is_playing = True
         self._current_scene_id = scene["id"]
-        self._pixel_cnt = self._get_num_leds(scene)
         self._proc = Process(
             target=scene_loop,
             args=(
                 scene["frames"],
-                self._pixel_cnt,
                 scene["fps"],
             ),
         )
@@ -94,7 +88,7 @@ class ScenePlayer:
             self._proc.terminate()
             self._proc.join()
             self._proc = None
-            clear_pixels(self._pixel_cnt)
+            clear_pixels()
 
         self._is_playing = False
         self._current_scene_id = None
@@ -106,12 +100,12 @@ class ScenePlayer:
                 self._is_playing = False
                 self._current_scene_id = None
                 self._proc = None
-                clear_pixels(self._pixel_cnt)
+                clear_pixels()
 
     def show_frame(self, scene: Scene, frame_num: int):
         # stop the current scene if it's playing
         self.stop_scene()
-        show_frame(scene["frames"][frame_num], self._get_num_leds(scene))
+        show_frame(scene["frames"][frame_num])
 
     def get_status(self):
         self._update_status()
