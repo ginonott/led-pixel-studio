@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 function getHostName() {
   if (typeof window !== "undefined") {
-    return `${window.location.host}:5000`;
+    return `${window.location.hostname}:5000`;
   }
 
   return "127.0.0.1:5000";
