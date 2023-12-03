@@ -88,10 +88,10 @@ class ScenePlayer:
             self._proc.terminate()
             self._proc.join()
             self._proc = None
-            clear_pixels()
 
         self._is_playing = False
         self._current_scene_id = None
+        clear_pixels()
 
     def _update_status(self):
         if self._proc:
