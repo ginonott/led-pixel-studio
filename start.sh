@@ -6,7 +6,7 @@ function cleanup {
 }
 
 cd client
-npm run build && npm run dev &
+npm run dev &
 CLIENT_SERVER=$!
 
 cd ../server
