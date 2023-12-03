@@ -41,7 +41,7 @@ def scene_loop(frames: list[Frame], leds: int, fps: int):
             cur_frame = 0
 
         debug(f"showing frame {cur_frame}")
-        set_frame(frames[cur_frame], leds, pixels)
+        set_frame(frames[cur_frame], leds, pixels, clear_previous=False)
 
         cur_frame += 1
 
@@ -54,7 +54,7 @@ def show_frame(frame: Frame, leds: int):
     # set all pixels to black to start
     pixels.fill((0, 0, 0))
 
-    set_frame(frame, leds, pixels)
+    set_frame(frame, leds, pixels, clear_previous=True)
 
 
 class ScenePlayer:
