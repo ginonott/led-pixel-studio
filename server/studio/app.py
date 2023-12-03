@@ -93,7 +93,7 @@ def create_scene():
     cur.execute("INSERT INTO scenes (data) VALUES (?)", (dumps(data),))
     con.commit()
 
-    return jsonify({"id": lastSceneId + 1})
+    return jsonify({"id": get_last_scene_id(cur)})
 
 
 @app.route("/api/scenes/<int:scene_id>", methods=["PUT"])

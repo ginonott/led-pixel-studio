@@ -10,10 +10,23 @@ function getHostName() {
   return window.location.hostname;
 }
 
-function getApiUrl(path: string): string {
+function fetchIt<T>(
+  path: string,
+  fetchOptions: RequestInit = {},
+  data?: object
+): Promise<T> {
   const url = `http://${getHostName()}:5000/api${path}`;
   console.log("API URL", url);
-  return url;
+  return fetch(url, {
+    ...fetchOptions,
+    mode: "cors",
+    cache: "no-cache",
+    headers: {
+      ...fetchOptions.headers,
+      "Content-Type": "application/json",
+    },
+    body: data ? JSON.stringify(data) : undefined,
+  }).then((res) => res.json());
 }
 
 function revalidateHomepage() {
@@ -25,65 +38,49 @@ function revalidateHomepage() {
 }
 
 export async function getScene(sceneId: string): Promise<Scene> {
-  const response = await fetch(getApiUrl(`/scenes/${sceneId}`), {
-    cache: "no-cache",
-  }).then((res) => res.json());
+  const { scene } = await fetchIt<{ scene: Scene }>(`/scenes/${sceneId}`);
 
-  return response.scene;
+  return scene;
 }
 
 export async function getScenes(): Promise<Scene[]> {
-  const scenesResponse = await fetch(getApiUrl("/scenes"), {
-    cache: "no-cache",
-  }).then((res) => {
-    return res.json();
-  });
+  const { scenes } = await fetchIt<{ scenes: Scene[] }>(`/scenes`);
 
-  return scenesResponse.scenes;
+  return scenes;
 }
 
 export async function getCurrentScene(): Promise<CurrentScene> {
-  return fetch(getApiUrl("/player"), {
-    cache: "no-cache",
-  }).then((res) => res.json());
+  return fetchIt<CurrentScene>(`/player`);
 }
 
 export async function playScene(sceneId: string): Promise<void> {
-  return fetch(getApiUrl(`/player/play`), {
-    method: "POST",
-    cache: "no-cache",
-    headers: {
-      "Content-Type": "application/json",
+  await fetchIt(
+    `/player/play`,
+    {
+      method: "POST",
     },
-    body: JSON.stringify({ sceneId }),
-  }).then((res) => {
-    revalidateHomepage();
-    res.json();
-  });
+    { sceneId }
+  );
+
+  revalidateHomepage();
 }
 
 export async function deleteScene(sceneId: string): Promise<void> {
-  return fetch(getApiUrl(`/scenes/${sceneId}`), {
+  await fetchIt(`/scenes/${sceneId}`, {
     method: "DELETE",
-    cache: "no-cache",
-  }).then((res) => {
-    revalidateHomepage();
-    return res.json();
   });
+  revalidateHomepage();
 }
 
 export async function saveScene(scene: Scene): Promise<void> {
-  return fetch(getApiUrl(`/scenes/${scene.id}`), {
-    cache: "no-cache",
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
+  await fetchIt(
+    `/scenes/${scene.id}`,
+    {
+      method: "PUT",
     },
-    body: JSON.stringify(scene),
-  }).then((res) => {
-    revalidateHomepage();
-    return res.json();
-  });
+    scene
+  );
+  revalidateHomepage();
 }
 
 export const throttledSaveScene = throttle(saveScene, 60000, {
@@ -91,40 +88,33 @@ export const throttledSaveScene = throttle(saveScene, 60000, {
 });
 
 export async function createScene(): Promise<{ id: string }> {
-  return fetch(getApiUrl(`/scenes`), {
-    cache: "no-cache",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  const response = await fetchIt<{ id: string }>(
+    `/scenes`,
+    {
+      method: "POST",
     },
-    body: JSON.stringify({}),
-  }).then((res) => {
-    revalidateHomepage();
-    return res.json();
-  });
+    {}
+  );
+  revalidateHomepage();
+
+  return response;
 }
 
 export async function stopScene(): Promise<void> {
-  return fetch(getApiUrl(`/player/stop`), {
-    cache: "no-cache",
+  await fetchIt(`/player/stop`, {
     method: "POST",
-  }).then((res) => {
-    revalidateHomepage();
-    return res.json();
   });
+  revalidateHomepage();
 }
 
 async function setFrame(sceneId: string, frameNum: number): Promise<void> {
-  return fetch(getApiUrl(`/player/show-frame`), {
-    cache: "no-cache",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  await fetchIt(
+    `/player/set-frame`,
+    {
+      method: "POST",
     },
-    body: JSON.stringify({ sceneId, frameNum }),
-  }).then((res) => {
-    return res.json();
-  });
+    { sceneId, frameNum }
+  );
 }
 
 export const throttledSetFrame = throttle(setFrame, 1000, {
