@@ -6,7 +6,7 @@ from flask_socketio import SocketIO
 from .scene_player import player
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", allow_unsafe_werkzeug=True)
 
 SceneQueryResult = namedtuple("Scene", ["id", "data"])
 
@@ -215,4 +215,3 @@ def handle_set_leds_event(json):
 
 
 init_db()
-socketio.run(app, host="0.0.0.0", port=3001)
