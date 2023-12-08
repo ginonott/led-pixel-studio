@@ -1,4 +1,5 @@
 import { LedState, LedPosition } from "@/app/models";
+import { Attributes, HTMLAttributes } from "react";
 
 export function isOn(ledState: LedState) {
   return ledState.r + ledState.g + ledState.b > 0;
@@ -14,12 +15,14 @@ export default function Led({
   isPrimarySelected,
   isSecondarySelected,
   ledNumber,
+  onMouseOver,
 }: {
   ledState: LedState;
   ledPosition: LedPosition;
   isPrimarySelected: boolean;
   isSecondarySelected: boolean;
   ledNumber: string;
+  onMouseOver?: HTMLAttributes<HTMLDivElement>["onMouseOver"];
 }) {
   const on = isOn(ledState);
 
@@ -32,6 +35,7 @@ export default function Led({
   return (
     <div
       className={`rounded-md  ${border} h-8 w-8`}
+      onMouseOver={onMouseOver}
       style={{
         backgroundColor: `rgb(${ledState.r},${ledState.g},${ledState.b})`,
         boxShadow: on

@@ -49,3 +49,26 @@ input {
 .bounce {
   animation: bounce 1s infinite;
 }
+
+* > * {
+  user-select: none;
+}
+
+/* Let's get this party started */
+.timeline-frames::-webkit-scrollbar {
+  width: 2px !important;
+  height: 8px !important;
+}
+
+/* Track */
+.timeline-frames::-webkit-scrollbar-track {
+  background-color: rgba(100, 100, 100, 0.01);
+  width: 2px;
+}
+
+/* Handle */
+.timeline-frames::-webkit-scrollbar-thumb {
+  background-color: rgba(25, 25, 25, 0.2);
+  border-radius: 9999px;
+  width: 2px;
+}

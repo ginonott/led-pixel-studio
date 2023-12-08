@@ -9,7 +9,7 @@ export function useKeyboardListeners(dispatch: Dispatch<Action>, state: State) {
         dispatch({ type: "set-multi-selecting", isMultiSelecting: true });
       }
 
-      if (event.key.toLowerCase() === "c" && state.isMultiSelecting) {
+      if (event.key.toLowerCase() === "a" && state.isMultiSelecting) {
         dispatch({ type: "select-led", led: "all" });
       }
 
@@ -17,29 +17,30 @@ export function useKeyboardListeners(dispatch: Dispatch<Action>, state: State) {
         dispatch({ type: "set-range-selecting", isRangeSelecting: true });
       }
 
-      if (event.key === "Backspace") {
+      if (event.key === "Escape") {
         dispatch({ type: "deselect-all-leds" });
         dispatch({ type: "deselect-secondary-frames" });
       }
 
+      if (event.key === "Delete") {
+        dispatch({ type: "delete-selected-frames" });
+      }
+
       if (event.key === "ArrowRight") {
-        const firstSelectedFrame = state.selectedFrames[0] ?? 0;
+        const selectedFrame = state.currentFrame;
 
         dispatch({
           type: "select-frame",
-          frame: Math.min(
-            firstSelectedFrame + 1,
-            state.scene.frames.length - 1
-          ),
+          frame: Math.min(selectedFrame + 1, state.scene.frames.length - 1),
         });
       }
 
       if (event.key === "ArrowLeft") {
-        const firstSelectedFrame = state.selectedFrames[0] ?? 0;
+        const selectedFrame = state.currentFrame;
 
         dispatch({
           type: "select-frame",
-          frame: Math.max(firstSelectedFrame - 1, 0),
+          frame: Math.max(selectedFrame - 1, 0),
         });
       }
     }

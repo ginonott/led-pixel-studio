@@ -1,7 +1,17 @@
-import { Container, VerticalDivider } from "@/app/components";
-import { LinkIcon, IconButton } from "@/app/icons/icons";
+import {
+  Container,
+  HorizontalDivider,
+  VerticalDivider,
+} from "@/app/components";
+import { LinkIcon, IconButton, Icon } from "@/app/icons/icons";
 import { Dispatch } from "react";
-import { State, Action } from "./state";
+import {
+  State,
+  Action,
+  DefaultAddLedTool,
+  DefaultSelectTool,
+  DefaultPaintTool,
+} from "./state";
 import {
   playScene,
   saveScene,
@@ -10,6 +20,7 @@ import {
   throttledSetFrame,
 } from "@/app/api";
 import { useRouter } from "next/navigation";
+import { getNumberOfLeds } from "./selectors";
 
 export function EditorTools({
   state,
@@ -54,15 +65,49 @@ export function EditorTools({
         }}
         className="text-3xl mx-4"
       />
+      <div className="flex flex-col justify-center align-middle font-semibold">
+        <div className="text-center">{getNumberOfLeds(state)}</div>
+        <div>LEDs</div>
+      </div>
       <div className="flex flex-row space-x-4">
         <IconButton
-          name="lightbulb"
-          text="Add LED"
+          name="arrow_selector_tool"
+          text="select tool"
           disabled={disabled}
-          modifier="add"
           color="positive"
           onClick={() => {
-            dispatch({ type: "add-led" });
+            dispatch({
+              type: "set-state",
+              key: "currentTool",
+              value: DefaultSelectTool,
+            });
+          }}
+          size="md"
+        />
+        <IconButton
+          name="brush"
+          text="Paint"
+          disabled={disabled}
+          size="md"
+          onClick={() => {
+            dispatch({
+              type: "set-state",
+              key: "currentTool",
+              value: DefaultPaintTool,
+            });
+          }}
+        />
+        <IconButton
+          name="lightbulb"
+          text="LED Tool"
+          disabled={disabled}
+          color="positive"
+          onClick={() => {
+            dispatch({
+              type: "set-state",
+              key: "currentTool",
+              value: DefaultAddLedTool,
+            });
           }}
           size="md"
         />
@@ -79,30 +124,9 @@ export function EditorTools({
         />
         <VerticalDivider />
         <IconButton
-          name="photo_frame"
-          text="Add Frame"
-          disabled={disabled}
-          color="positive"
-          onClick={() => {
-            dispatch({ type: "add-frame" });
-          }}
-          size="md"
-        />
-        <IconButton
-          name="photo_frame"
-          text="Delete Frame"
-          color="negative"
-          disabled={state.scene.frames.length <= 1 || disabled}
-          onClick={() => {
-            dispatch({ type: "delete-selected-frames" });
-          }}
-          size="md"
-        />
-        <VerticalDivider />
-        <IconButton
           color="positive"
           name={state.isPlaying ? "pause" : "play_arrow"}
-          text={state.isPlaying ? "Pause" : "Play"}
+          text={state.isPlaying ? "Pause" : "Test"}
           onClick={toggleAnimationState}
           size="md"
         />

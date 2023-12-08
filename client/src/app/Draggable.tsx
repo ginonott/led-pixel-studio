@@ -6,9 +6,12 @@ export function Draggable(props: {
   children: React.ReactNode;
   id: string | number;
   initialPosition: { left: number; top: number };
+  disabled?: boolean;
+  style?: React.CSSProperties;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: props.id,
+    disabled: props.disabled,
   });
   const style = transform
     ? {
@@ -20,6 +23,7 @@ export function Draggable(props: {
     <button
       ref={setNodeRef}
       style={{
+        ...props.style,
         ...style,
         position: "absolute",
         left: `${props.initialPosition.left}%`,

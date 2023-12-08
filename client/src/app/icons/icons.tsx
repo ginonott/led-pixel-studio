@@ -1,4 +1,18 @@
+import localFont from "next/font/local";
 import Link from "next/link";
+import { HTMLAttributes } from "react";
+
+const MatieralOutlined = localFont({
+  src: "./MaterialSymbolsOutlined.woff2",
+  display: "swap",
+  weight: "400",
+});
+
+const MatieralSharp = localFont({
+  src: "./MaterialSymbolsSharp.woff2",
+  display: "swap",
+  weight: "400",
+});
 
 const baseSize = 48;
 
@@ -31,12 +45,44 @@ type Icons =
   | "photo_frame"
   | "cast"
   | "graphic_eq"
-  | "edit";
+  | "edit"
+  | "arrow_selector_tool"
+  | "brush";
+
+function getSpanIconClass(icon: Icons) {
+  if (["arrow_selector_tool", "remove", "add", "brush"].includes(icon)) {
+    return MatieralOutlined.className;
+  }
+
+  return MatieralSharp.className;
+}
+
 type Modifiers = "add" | "remove";
+
+export function BareIcon({
+  name: icon,
+  className = "",
+  ...rest
+}: {
+  name: Icons;
+  className?: string;
+} & HTMLAttributes<HTMLSpanElement>) {
+  return (
+    <span
+      {...rest}
+      className={`${getSpanIconClass(
+        icon
+      )} select-none pointer-events-none ${className}`}
+    >
+      {icon}
+    </span>
+  );
+}
 
 export function Icon({
   name: icon,
   size = "md",
+  sizeOverride,
   color = "neutral",
   text,
   depressed = false,
@@ -47,13 +93,14 @@ export function Icon({
   name: Icons;
   text?: string;
   size?: keyof typeof dimensions;
+  sizeOverride?: number;
   color?: keyof typeof colors;
   depressed?: boolean;
   showHover?: boolean;
   modifier?: Modifiers;
   disabled?: boolean;
 }) {
-  const pxs = dimensions[size];
+  const pxs = sizeOverride || dimensions[size];
   const inner = pxs * 0.9;
   const colorClass = colors[color];
   const depressedClass = depressed ? "translate-x-1 translate-y-1" : "";
@@ -73,7 +120,9 @@ export function Icon({
       >
         {modifier && (
           <span
-            className={"material-icons-sharp select-none absolute z-50"}
+            className={`${getSpanIconClass(
+              modifier
+            )} select-none absolute z-50`}
             style={{
               fontSize: modifierSize,
               bottom: pxs - modifierSize,
@@ -100,8 +149,10 @@ export function Icon({
           style={{ width: inner, height: inner }}
         >
           <span
-            className="material-icons-sharp select-none pointer-events-none"
-            style={{ fontSize, maxWidth: fontSize, maxHeight: fontSize }}
+            className={`${getSpanIconClass(
+              icon
+            )} select-none pointer-events-none`}
+            style={{ fontSize }}
           >
             {icon}
           </span>

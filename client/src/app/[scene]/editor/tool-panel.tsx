@@ -1,16 +1,81 @@
 "use client";
-import { Button, HorizontalDivider, Label } from "@/app/components";
+import { Button, Container, HorizontalDivider, Label } from "@/app/components";
 import { IconButton } from "@/app/icons/icons";
 import { rgbToHex } from "@/app/utils";
 import { Dispatch, useState } from "react";
 import { isOn } from "./led";
 import { Action, State, getPrimarySelectedLedState } from "./state";
+import { getAllSelectedLeds } from "./selectors";
+
+// 10 shades of blue, red, green, yellow, cyan, magenta
+const colors = [
+  "#ff0000",
+  "#ff1a1a",
+  "#ff3333",
+  "#ff4d4d",
+  "#ff6666",
+  "#ff8080",
+  "#ff9999",
+  "#ffb3b3",
+  "#ffcccc",
+  "#ffe6e6",
+  "#00ff00",
+  "#1aff1a",
+  "#33ff33",
+  "#4dff4d",
+  "#66ff66",
+  "#80ff80",
+  "#99ff99",
+  "#b3ffb3",
+  "#ccffcc",
+  "#e6ffe6",
+  "#0000ff",
+  "#1a1aff",
+  "#3333ff",
+  "#4d4dff",
+  "#6666ff",
+  "#8080ff",
+  "#9999ff",
+  "#b3b3ff",
+  "#ccccff",
+  "#e6e6ff",
+  "#ffff00",
+  "#ffff1a",
+  "#ffff33",
+  "#ffff4d",
+  "#ffff66",
+  "#ffff80",
+  "#ffff99",
+  "#ffffb3",
+  "#ffffcc",
+  "#ffffe6",
+  "#00ffff",
+  "#1affff",
+  "#33ffff",
+  "#4dffff",
+  "#66ffff",
+  "#80ffff",
+  "#99ffff",
+  "#b3ffff",
+  "#ccffff",
+  "#e6ffff",
+  "#ff00ff",
+  "#ff1aff",
+  "#ff33ff",
+  "#ff4dff",
+  "#ff66ff",
+  "#ff80ff",
+  "#ff99ff",
+  "#ffb3ff",
+  "#ffccff",
+  "#ffe6ff",
+];
 
 function ToolPanelContainer({ children }: { children: React.ReactNode }) {
   const [isOpen, open] = useState(true);
 
   return (
-    <div className="absolute top-4 left-4 min-w-[256px] border-2 border-black">
+    <div className="absolute top-4 left-4 w-[20vw] border-2 border-black cursor-default">
       <div className="border-b-2 border-black flex flex-row items-center">
         <IconButton
           size="sm"
@@ -43,6 +108,17 @@ function LEDTools({
     toColor: "#00ff00",
     frames: 30,
   });
+
+  const selectedLeds = getAllSelectedLeds(state);
+
+  if (selectedLeds.length === 0) {
+    return (
+      <p>
+        Select an LED for more options. Hint: you can CMD click and shift click
+        for multiselect!
+      </p>
+    );
+  }
 
   const primarySelectedLed = getPrimarySelectedLedState(state);
   const isPrimaryLedOn = isOn(primarySelectedLed);
@@ -209,6 +285,62 @@ function LEDTools({
   );
 }
 
+function PaintTools({
+  state,
+  dispatch,
+}: {
+  state: State;
+  dispatch: Dispatch<Action>;
+}) {
+  if (state.currentTool.type !== "paint") {
+    return null;
+  }
+
+  const currentColor = state.currentTool.color;
+  return (
+    <div>
+      <p>Colors</p>
+      <div className="flex flex-row flex-wrap gap-4">
+        {colors.map((c) => {
+          return (
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 4,
+                backgroundColor: c,
+                border: c === currentColor ? "1px solid black" : "none",
+                margin: c === currentColor ? 0 : 2,
+              }}
+              key={c}
+              onClick={() => {
+                dispatch({
+                  type: "set-state",
+                  key: "currentTool",
+                  value: { type: "paint", color: c },
+                });
+              }}
+            />
+          );
+        })}
+      </div>
+      <Label label="Custom Color">
+        <input
+          type="color"
+          value={currentColor}
+          onChange={(event) => {
+            dispatch({
+              type: "set-state",
+              key: "currentTool",
+              value: { type: "paint", color: event.target.value },
+            });
+          }}
+        />
+      </Label>
+    </div>
+  );
+}
+
 export function ToolPanel({
   state,
   dispatch,
@@ -216,7 +348,15 @@ export function ToolPanel({
   state: State;
   dispatch: Dispatch<Action>;
 }) {
-  const areLedsSelected = state.selectedLeds.length > 0;
+  const selectTools =
+    state.currentTool.type === "select" ? (
+      <LEDTools state={state} dispatch={dispatch} />
+    ) : null;
+
+  const paintTools =
+    state.currentTool.type === "paint" ? (
+      <PaintTools state={state} dispatch={dispatch} />
+    ) : null;
 
   return (
     <ToolPanelContainer>
@@ -236,11 +376,8 @@ export function ToolPanel({
         />
       </Label>
       <HorizontalDivider />
-      {areLedsSelected ? (
-        <LEDTools state={state} dispatch={dispatch} />
-      ) : (
-        "Select LEDs for more options"
-      )}
+      {selectTools}
+      {paintTools}
     </ToolPanelContainer>
   );
 }

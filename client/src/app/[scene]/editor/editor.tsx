@@ -8,11 +8,34 @@ import Timeline from "./timeline";
 import { DndContext, useDroppable } from "@dnd-kit/core";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { ToolPanel } from "./tool-panel";
-import { State, defaultLedState, Action, reducer } from "./state";
+import {
+  State,
+  defaultLedState,
+  Action,
+  reducer,
+  DefaultSelectTool,
+} from "./state";
 import { useKeyboardListeners } from "./useKeyboardListeners";
 import { useAnimateScene } from "./useAnimateScene";
 import { useSave } from "./useSave";
 import { EditorTools } from "./EditorTools";
+import {
+  getAdditionalSelectedLeds,
+  getAllSelectedLeds,
+  getSelectedLed,
+} from "./selectors";
+import BrushCursor from "./brush.png";
+
+function calculateRelativePosition(
+  canvasRect: DOMRect,
+  x: number,
+  y: number
+): { relX: number; relY: number } {
+  const relX = ((x - canvasRect.left) / canvasRect.width) * 100;
+  const relY = ((y - canvasRect.top) / canvasRect.height) * 100;
+
+  return { relX, relY };
+}
 
 function Canvas({
   state,
@@ -23,25 +46,51 @@ function Canvas({
   dispatch: Dispatch<Action>;
   setRef: (ref: HTMLElement | null) => void;
 }) {
+  const canvasRef = useRef<HTMLDivElement | null>(null);
   const { setNodeRef } = useDroppable({
     id: "droppable",
   });
 
   const selectedFrame: Frame = state.scene.frames[state.selectedFrames[0] ?? 0];
+  const selectedLed = getSelectedLed(state);
+  const additionalSelectedLeds = getAdditionalSelectedLeds(state);
+  const cursorStyle =
+    state.currentTool.type === "paint"
+      ? `url(${BrushCursor.src}) 0 24, auto`
+      : "auto";
 
   return (
     <div
-      className="flex-1 relative mb-8 mr-8"
+      className={`flex-1 relative mb-8 mr-8`}
+      style={{
+        cursor: cursorStyle,
+      }}
       ref={(node) => {
         setNodeRef(node);
         setRef(node);
+        canvasRef.current = node;
+      }}
+      onClick={(event) => {
+        if (!canvasRef.current) {
+          return;
+        }
+
+        if (state.currentTool.type === "add-led") {
+          console.log("adding led");
+          dispatch({
+            type: "add-led",
+            position: calculateRelativePosition(
+              canvasRef.current.getBoundingClientRect(),
+              event.clientX,
+              event.clientY
+            ),
+          });
+        }
       }}
     >
       <ToolPanel state={state} dispatch={dispatch} />
       {Object.entries(state.scene.ledPositions).map(([led, position]) => {
         const ledState = selectedFrame.ledStates[led] ?? defaultLedState;
-        const primarySelectedLED = state.selectedLeds[0];
-        const secondarySelectedLEDs = state.selectedLeds.slice(1);
 
         if (!position) return null;
         if (state.isPlaying) {
@@ -50,8 +99,8 @@ function Canvas({
               key={led}
               ledPosition={position}
               ledState={ledState}
-              isPrimarySelected={led === primarySelectedLED}
-              isSecondarySelected={secondarySelectedLEDs.includes(led)}
+              isPrimarySelected={led === selectedLed}
+              isSecondarySelected={additionalSelectedLeds.includes(led)}
               ledNumber={led}
             />
           );
@@ -62,13 +111,26 @@ function Canvas({
             key={led}
             id={led}
             initialPosition={{ left: position.relX, top: position.relY }}
+            disabled={state.currentTool.type !== "select"}
+            style={{
+              cursor: cursorStyle,
+            }}
           >
             <Led
               ledPosition={position}
               ledState={ledState}
-              isPrimarySelected={led === primarySelectedLED}
-              isSecondarySelected={secondarySelectedLEDs.includes(led)}
+              isPrimarySelected={led === selectedLed}
+              isSecondarySelected={additionalSelectedLeds.includes(led)}
               ledNumber={led}
+              onMouseOver={(event) => {
+                if (state.currentTool.type === "paint" && event.buttons === 1) {
+                  dispatch({
+                    type: "set-led-color",
+                    led,
+                    color: state.currentTool.color,
+                  });
+                }
+              }}
             />
           </Draggable>
         );
@@ -87,7 +149,9 @@ export default function SceneEditor({ scene: initialScene }: { scene: Scene }) {
     isMultiSelecting: false,
     isRangeSelecting: false,
     isPlaying: false,
-  });
+    currentTool: DefaultSelectTool,
+    currentFrame: 0,
+  } as State);
 
   const { handleSave, lastSaved } = useSave(state);
 
@@ -115,8 +179,11 @@ export default function SceneEditor({ scene: initialScene }: { scene: Scene }) {
 
         const led = event.active.id;
 
-        const relX = ((rect.left - canvasRect.left) / canvasRect.width) * 100;
-        const relY = ((rect.top - canvasRect.top) / canvasRect.height) * 100;
+        const { relX, relY } = calculateRelativePosition(
+          canvasRect,
+          rect.left,
+          rect.top
+        );
 
         dispatch({
           type: "set-led-position",
@@ -143,18 +210,7 @@ export default function SceneEditor({ scene: initialScene }: { scene: Scene }) {
           }}
         />
 
-        <div className="flex flex-row overflow-y-auto">
-          <Timeline
-            key={Math.random()}
-            frames={state.scene.frames}
-            selectedFrames={state.selectedFrames}
-            selectedLeds={state.selectedLeds}
-            onSelectFrame={(frame) => {
-              dispatch({ type: "select-frame", frame });
-            }}
-            fps={state.scene.fps}
-          />
-        </div>
+        <Timeline state={state} dispatch={dispatch} />
       </div>
     </DndContext>
   );

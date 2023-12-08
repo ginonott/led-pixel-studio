@@ -12,6 +12,16 @@ socketio = SocketIO(app)
 SceneQueryResult = namedtuple("Scene", ["id", "data"])
 
 
+def init_db():
+    print("creating database")
+    con = sqlite3.connect("studio.db")
+    cur = con.cursor()
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS scenes (id INTEGER PRIMARY KEY, data JSON NOT NULL)"
+    )
+    con.commit()
+
+
 @app.after_request
 def add_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
@@ -53,14 +63,6 @@ def get_scenes(cur: sqlite3.Cursor) -> list[SceneQueryResult]:
         scenes.append(scene)
 
     return scenes
-
-
-def init_db():
-    con = sqlite3.connect("studio.db")
-    cur = con.cursor()
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS scenes (id INTEGER PRIMARY KEY, data JSON NOT NULL)"
-    )
 
 
 @app.route("/api/scenes", methods=["GET"])
@@ -190,6 +192,5 @@ def handle_set_leds_event(json):
     print("received json: " + str(json))
 
 
-if __name__ == "__main__":
-    init_db()
-    socketio.run(app, host="0.0.0.0", port=3001)
+init_db()
+socketio.run(app, host="0.0.0.0", port=3001)

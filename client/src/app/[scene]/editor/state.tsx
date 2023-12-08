@@ -3,17 +3,50 @@ import { Frame, LedState, Scene } from "@/app/models";
 import { isOff } from "./led";
 import { hexToRgb } from "@/app/utils";
 import { cloneDeep } from "lodash";
+import { getAllSelectedLeds } from "./selectors";
+
+type Tool<
+  Type extends string = "generic",
+  Data extends Record<string, unknown> = {}
+> = {
+  type: Type;
+} & Data;
+
+type SelectTool = Tool<
+  "select",
+  { selectedLed: string | null; additionalLeds: string[] }
+>;
+export const DefaultSelectTool: SelectTool = {
+  type: "select",
+  selectedLed: null,
+  additionalLeds: [],
+};
+
+type PaintTool = Tool<"paint", { color: string }>;
+export const DefaultPaintTool: PaintTool = {
+  type: "paint",
+  color: "#00ff00",
+};
+
+type AddLedTool = Tool<"add-led">;
+export const DefaultAddLedTool: AddLedTool = { type: "add-led" };
 
 export type State = {
   scene: Scene;
-  selectedLeds: string[];
+  currentTool: SelectTool | PaintTool | AddLedTool;
+  currentFrame: number;
   selectedFrames: number[];
   isMultiSelecting: boolean;
   isRangeSelecting: boolean;
   isPlaying: boolean;
 };
+
 type AddLedAction = {
   type: "add-led";
+  position?: {
+    relX: number;
+    relY: number;
+  };
 };
 type SetLedPositionAction = {
   type: "set-led-position";
@@ -34,9 +67,13 @@ type DeselectSecondaryFramesAction = {
 type SetLedColorAction = {
   type: "set-led-color";
   color: string;
+  led?: string;
 };
 type AddFrameAction = {
   type: "add-frame";
+};
+type RemoveFrameAction = {
+  type: "remove-last-frame";
 };
 type SelectFrameAction = {
   type: "select-frame";
@@ -88,7 +125,11 @@ type GlowAction = {
 };
 
 type SetterActions<
-  K extends keyof State = "isMultiSelecting" | "isRangeSelecting",
+  K extends keyof State =
+    | "isMultiSelecting"
+    | "isRangeSelecting"
+    | "currentTool"
+    | "currentFrame",
   V extends State[K] = State[K]
 > = {
   type: "set-state";
@@ -112,6 +153,7 @@ export type Action =
   | DeslectAllLedsAction
   | SetLedColorAction
   | AddFrameAction
+  | RemoveFrameAction
   | SelectFrameAction
   | SetMultiSelectingAction
   | DeselectSecondaryFramesAction
@@ -133,9 +175,14 @@ export const defaultLedState: LedState = {
   b: 0,
 };
 
-export function addLed(state: State, action: AddLedAction) {
+// helpers
+function getLedsList(state: State) {
+  return Object.keys(state.scene.ledPositions);
+}
+
+function addLed(state: State, action: AddLedAction) {
   const led = Object.values(state.scene.ledPositions).length + 1;
-  state.scene.ledPositions[led - 1] = {
+  state.scene.ledPositions[led - 1] = action.position || {
     relX: 50,
     relY: 50,
   };
@@ -143,7 +190,7 @@ export function addLed(state: State, action: AddLedAction) {
   return state;
 }
 
-export function removeLastLed(state: State, action: RemoveLastLedAction) {
+function removeLastLed(state: State, action: RemoveLastLedAction) {
   const numLeds = Object.values(state.scene.ledPositions).filter(
     Boolean
   ).length;
@@ -153,7 +200,7 @@ export function removeLastLed(state: State, action: RemoveLastLedAction) {
   return state;
 }
 
-export function setLedPosition(state: State, action: SetLedPositionAction) {
+function setLedPosition(state: State, action: SetLedPositionAction) {
   const ledPosition = state.scene.ledPositions[action.led];
   if (!ledPosition) return state;
   ledPosition.relX = action.relX;
@@ -161,21 +208,32 @@ export function setLedPosition(state: State, action: SetLedPositionAction) {
   return state;
 }
 
-export function selectLed(state: State, action: SelectLedAction) {
+function selectLed(state: State, action: SelectLedAction) {
+  if (state.currentTool.type !== "select") {
+    return state;
+  }
+
+  const leds = getLedsList(state);
+
+  if (leds.length < 1) {
+    return state;
+  }
+
+  const selectTool = state.currentTool;
+
   if (state.isMultiSelecting) {
     if (action.led === "all") {
-      state.selectedLeds = Object.keys(state.scene.ledPositions);
-    } else if (state.selectedLeds.includes(action.led)) {
-      state.selectedLeds = state.selectedLeds.filter(
+      selectTool.selectedLed = leds[0];
+      selectTool.additionalLeds = leds;
+    } else if (selectTool.additionalLeds.includes(action.led)) {
+      selectTool.additionalLeds = selectTool.additionalLeds.filter(
         (led) => led !== action.led
       );
     } else {
-      state.selectedLeds.push(action.led);
+      selectTool.additionalLeds.push(action.led);
     }
-  } else if (state.isRangeSelecting) {
-    let start = Number.parseInt(
-      state.selectedLeds[state.selectedLeds.length - 1]
-    );
+  } else if (state.isRangeSelecting && selectTool.selectedLed) {
+    let start = Number.parseInt(selectTool.selectedLed);
     let end = Number.parseInt(action.led);
 
     if (start > end) {
@@ -183,25 +241,28 @@ export function selectLed(state: State, action: SelectLedAction) {
     }
 
     for (let i = start; i <= end; i++) {
-      if (!state.selectedLeds.includes(`${i}`)) {
-        state.selectedLeds.push(`${i}`);
+      if (!state.currentTool.additionalLeds.includes(`${i}`)) {
+        selectTool.additionalLeds.push(`${i}`);
       }
     }
   } else {
-    state.selectedLeds = [action.led];
+    selectTool.selectedLed = action.led;
+    selectTool.additionalLeds = [];
   }
 
   return state;
 }
 
-export function deselectAllLeds(state: State, action: DeslectAllLedsAction) {
-  state.selectedLeds = [];
+function deselectAllLeds(state: State, action: DeslectAllLedsAction) {
+  state.currentTool = DefaultSelectTool;
   return state;
 }
 
-export function setLedColor(state: State, action: SetLedColorAction) {
+function setLedColor(state: State, action: SetLedColorAction) {
+  const selectedLeds = action.led ? [action.led] : getAllSelectedLeds(state);
+
   for (const frame of state.selectedFrames) {
-    for (const led of state.selectedLeds) {
+    for (const led of selectedLeds) {
       const { r, g, b } = hexToRgb(action.color)!;
 
       if (isOff({ r, g, b })) {
@@ -216,6 +277,11 @@ export function setLedColor(state: State, action: SetLedColorAction) {
 }
 
 function blink(state: State, action: BlinkAction) {
+  const selectedLeds = getAllSelectedLeds(state);
+  if (selectedLeds.length < 1) {
+    return state;
+  }
+
   const { r, g, b } = hexToRgb(action.color)!;
   const primaryFrame = state.selectedFrames[0];
   const totalFrames = (action.framesOff + action.framesOn) * action.times;
@@ -224,7 +290,7 @@ function blink(state: State, action: BlinkAction) {
     const isOn = i % (action.framesOn + action.framesOff) < action.framesOn;
     const currentFrame = primaryFrame + i;
 
-    for (const led of state.selectedLeds) {
+    for (const led of selectedLeds) {
       if (state.scene.frames[currentFrame] === undefined) {
         state.scene.frames[currentFrame] = {
           ledStates: {},
@@ -243,6 +309,11 @@ function blink(state: State, action: BlinkAction) {
 }
 
 function glow(state: State, action: GlowAction) {
+  const selectedLeds = getAllSelectedLeds(state);
+  if (selectedLeds.length < 1) {
+    return state;
+  }
+
   let { r: fromR, g: fromG, b: fromB } = hexToRgb(action.fromColor)!;
   let { r: toR, g: toG, b: toB } = hexToRgb(action.toColor)!;
 
@@ -252,7 +323,7 @@ function glow(state: State, action: GlowAction) {
   for (let i = 0; i < totalFrames; i++) {
     const currentFrame = startingFrame + i;
 
-    for (const led of state.selectedLeds) {
+    for (const led of selectedLeds) {
       if (state.scene.frames[currentFrame] === undefined) {
         state.scene.frames[currentFrame] = {
           ledStates: {},
@@ -274,7 +345,7 @@ function glow(state: State, action: GlowAction) {
   for (let i = 0; i < totalFrames; i++) {
     const currentFrame = startingFrame + i;
 
-    for (const led of state.selectedLeds) {
+    for (const led of selectedLeds) {
       if (state.scene.frames[currentFrame] === undefined) {
         state.scene.frames[currentFrame] = {
           ledStates: {},
@@ -293,7 +364,7 @@ function glow(state: State, action: GlowAction) {
   return state;
 }
 
-export function addFrame(state: State, action: AddFrameAction) {
+function addFrame(state: State, action: AddFrameAction) {
   const frame: Frame = {
     ledStates: {},
   };
@@ -302,9 +373,15 @@ export function addFrame(state: State, action: AddFrameAction) {
   return state;
 }
 
-export function selectFrame(state: State, action: SelectFrameAction) {
+function removeFrame(state: State, action: RemoveFrameAction) {
+  state.scene.frames.pop();
+
+  return state;
+}
+
+function selectFrame(state: State, action: SelectFrameAction) {
   if (state.isRangeSelecting) {
-    let start = state.selectedFrames[0];
+    let start = state.currentFrame;
     let end = action.frame;
 
     if (start > end) {
@@ -329,14 +406,15 @@ export function selectFrame(state: State, action: SelectFrameAction) {
       state.selectedFrames.push(action.frame);
     }
   } else {
-    state.selectedFrames = [action.frame];
+    state.currentFrame = action.frame;
+    state.selectedFrames = [];
   }
 
   return state;
 }
 
 function handleSetterAction(state: State, action: SetterActions) {
-  state[action.key] = action.value;
+  (state[action.key] as any) = action.value;
   return state;
 }
 
@@ -353,18 +431,12 @@ function handleSceneSetterAction<
   return state;
 }
 
-export function setMultiSelecting(
-  state: State,
-  action: SetMultiSelectingAction
-) {
+function setMultiSelecting(state: State, action: SetMultiSelectingAction) {
   state.isMultiSelecting = action.isMultiSelecting;
   return state;
 }
 
-export function setRangeSelecting(
-  state: State,
-  action: SetRangeSelectingAction
-) {
+function setRangeSelecting(state: State, action: SetRangeSelectingAction) {
   state.isRangeSelecting = action.isRangeSelecting;
   return state;
 }
@@ -395,7 +467,7 @@ function deleteSelectedFrames(state: State) {
 function play(state: State) {
   state.isPlaying = true;
   state.selectedFrames = [0];
-  state.selectedLeds = [];
+  state.currentTool = DefaultSelectTool;
 
   return state;
 }
@@ -406,13 +478,18 @@ function stop(state: State) {
 }
 
 function chaseAnimatimation(state: State, action: ChaseAction) {
+  const selectedLeds = getAllSelectedLeds(state);
+  if (selectedLeds.length < 1) {
+    return state;
+  }
+
   const colors = ["#ff0000", "#00ff00", "#0000ff"];
   const frames = action.frames;
 
   for (let i = 0; i < frames; i++) {
     const currentFrame = state.selectedFrames[0] + i;
 
-    for (const led of state.selectedLeds) {
+    for (const led of selectedLeds) {
       if (state.scene.frames[currentFrame] === undefined) {
         state.scene.frames[currentFrame] = {
           ledStates: {},
@@ -498,6 +575,9 @@ export function reducer(state: State, action: Action): State {
     case "add-frame":
       newState = addFrame(newState, action);
       break;
+    case "remove-last-frame":
+      newState = removeFrame(newState, action);
+      break;
     case "select-frame":
       newState = selectFrame(newState, action);
       break;
@@ -545,8 +625,13 @@ export function reducer(state: State, action: Action): State {
       break;
   }
 
-  if (newState.selectedFrames.length === 0) {
-    newState.selectedFrames = [0];
+  // always ensure we have at least one frame and that the current frame is in bounds
+  if (newState.currentFrame > newState.scene.frames.length - 1) {
+    newState.currentFrame = 0;
+  }
+
+  if (newState.currentFrame < 0) {
+    newState.currentFrame = 0;
   }
 
   if (newState.scene.frames.length === 0) {
@@ -560,7 +645,10 @@ export function reducer(state: State, action: Action): State {
 
 // selectors
 export function getPrimarySelectedLedState(state: State): LedState {
-  const primarySelectedLED = state.selectedLeds[0] ?? "";
+  const primarySelectedLED =
+    state.currentTool.type === "select"
+      ? state.currentTool.selectedLed || ""
+      : "";
   const primarySelectedFrame = state.selectedFrames[0] ?? 0;
   return (
     state.scene.frames[primarySelectedFrame].ledStates[primarySelectedLED] ??
