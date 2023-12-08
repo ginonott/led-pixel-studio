@@ -62,5 +62,11 @@ export function useKeyboardListeners(dispatch: Dispatch<Action>, state: State) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [dispatch, state.selectedFrames, state.scene.frames.length]);
+  }, [
+    dispatch,
+    state.selectedFrames,
+    state.scene.frames.length,
+    state.isMultiSelecting,
+    state.currentFrame,
+  ]);
 }
