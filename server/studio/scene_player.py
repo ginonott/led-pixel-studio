@@ -90,7 +90,7 @@ class ScenePlayer:
         pixels = neopixel.NeoPixel(
             board.D18,
             len(scene["ledPositions"]),
-            brightness=scene["brightness"] / 100,
+            brightness=max(min(scene["brightness"], 1), 100) / 100,
             auto_write=False,
         )
 
@@ -125,7 +125,10 @@ class ScenePlayer:
         self._is_playing = True
         self._current_scene_id = REALTIME_SCENE_ID
         pixels = neopixel.NeoPixel(
-            board.D18, num_leds=num_leds, brightness=brightness / 100, auto_write=False
+            board.D18,
+            num_leds,
+            brightness=max(min(brightness, 1), 100) / 100,
+            auto_write=False,
         )
 
     def set_live_frame(self, frame: Frame):
