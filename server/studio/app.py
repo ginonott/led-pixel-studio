@@ -2,13 +2,22 @@ from collections import namedtuple
 import sqlite3
 from flask import Flask, jsonify, request
 from json import dumps, loads
-from flask_cors import CORS
+from flask_socketio import SocketIO
 from .scene_player import player
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"*": {"origins": "*"}})
+app.config["SECRET_KEY"] = "secret!"
+socketio = SocketIO(app)
 
 SceneQueryResult = namedtuple("Scene", ["id", "data"])
+
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    return response
 
 
 def get_last_scene_id(cur: sqlite3.Cursor) -> None:
@@ -16,7 +25,7 @@ def get_last_scene_id(cur: sqlite3.Cursor) -> None:
     if res:
         return res[0]
 
-    return None
+    return -1
 
 
 def get_scene_by_id(cur: sqlite3.Cursor, scene_id: int) -> SceneQueryResult | None:
@@ -79,21 +88,29 @@ def get_scene(scene_id):
 def create_scene():
     con = sqlite3.connect("studio.db")
     cur = con.cursor()
+    data = request.get_json()
 
-    lastSceneId = get_last_scene_id(cur) or -1
+    next_id = get_last_scene_id(cur) + 1
 
     data = {
-        "id": lastSceneId + 1,
+        "id": next_id,
         "name": "New Scene",
         "ledPositions": {},
         "frames": [{"ledStates": {}}],
         "fps": 5,
+        "brightness": 0.2,
     }
 
-    cur.execute("INSERT INTO scenes (data) VALUES (?)", (dumps(data),))
+    cur.execute(
+        "INSERT INTO scenes (id, data) VALUES (?,?)",
+        (
+            next_id,
+            dumps(data),
+        ),
+    )
     con.commit()
 
-    return jsonify({"id": get_last_scene_id(cur)})
+    return jsonify({"id": next_id})
 
 
 @app.route("/api/scenes/<int:scene_id>", methods=["PUT"])
@@ -162,4 +179,17 @@ def show_frame():
         return jsonify({"error": "Scene not found"}), 404
 
 
-init_db()
+# socket io
+@socketio.on("init_realtime")
+def handle_init_realtime_event(json):
+    print("received json: " + str(json))
+
+
+@socketio.on("set_leds")
+def handle_set_leds_event(json):
+    print("received json: " + str(json))
+
+
+if __name__ == "__main__":
+    init_db()
+    socketio.run(app, host="0.0.0.0", port=3001)

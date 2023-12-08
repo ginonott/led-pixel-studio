@@ -10,3 +10,4 @@ typing_extensions==4.8.0
 Werkzeug==3.0.1
 rpi_ws281x 
 adafruit-circuitpython-neopixel
+flask-socketio

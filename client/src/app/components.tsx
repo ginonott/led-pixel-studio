@@ -55,15 +55,21 @@ export const Button = ({
   variant = "default",
   onClick,
 }: React.PropsWithChildren<{
-  variant: "primary" | "default";
+  variant: "primary" | "default" | "spotify";
   onClick: () => void;
 }>) => {
   // return a button with tailwind classes styled in neobrutalist fashion
-  const background = variant === "primary" ? "bg-blue-300" : "bg-white";
+  const background =
+    variant === "primary"
+      ? "bg-blue-300"
+      : variant == "spotify"
+      ? "bg-green-300"
+      : "bg-white";
+
   return (
     <button
       onClick={onClick}
-      className={`border-2 border-b-4 border-r-4 border-black p-2 ${background} flex-row hover:scale-y-95`}
+      className={`border-2 border-b-4 border-r-4 border-black p-2 ${background} flex-row hover:saturate-150 shadow-brutalist active:shadow-none active:translate-x-[5px] active:translate-y-[5px]`}
     >
       {children}
     </button>

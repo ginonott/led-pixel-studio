@@ -5,9 +5,10 @@ from ..debug import debug
 class NeoPixel(collections.UserList):
     pixels: list[list[int, int, int]]
 
-    def __init__(self, pin, num):
+    def __init__(self, pin, num, brightness=0.2, **kwargs):
         self.pin = pin
         self.num = num
+        print(f"setting brightness to {brightness}")
         super().__init__([[0, 0, 0]] * num)
 
     def fill(self, color: tuple[int, int, int]):
@@ -18,3 +19,6 @@ class NeoPixel(collections.UserList):
     def __setitem__(self, index, value):
         debug(f"setting LED {index} to {value}")
         super().__setitem__(index, value)
+
+    def show(self):
+        debug(f"writing pixels")

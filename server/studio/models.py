@@ -1,4 +1,4 @@
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
 
 
 class LedState(TypedDict):
@@ -17,3 +17,5 @@ class Scene(TypedDict):
     ledPositions: dict[int, Any]
     frames: list[Frame]
     fps: int
+    brightness: float
+    type: Literal["loop", "music"]

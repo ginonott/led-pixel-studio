@@ -25,7 +25,7 @@ export default function SceneControls({
       />
       <IconButton
         text="Edit"
-        name="arrow_forward"
+        name="edit"
         onClick={() => {
           location.href = `/${scene.id}/editor`;
         }}

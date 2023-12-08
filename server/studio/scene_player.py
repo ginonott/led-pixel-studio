@@ -11,16 +11,18 @@ except ImportError:
     import studio.stubs.board as board
     import studio.stubs.neopixel as neopixel
 
-leds = 50
-pixels = neopixel.NeoPixel(board.D18, 50, brightness=0.2, auto_write=False)
+DEFAULT_LEDS = 50
+
+REALTIME_SCENE_ID = -525
+
+pixels = neopixel.NeoPixel(board.D18, DEFAULT_LEDS, brightness=0.2, auto_write=False)
 
 
 def set_frame(frame: Frame, clear_previous=True):
     # set all pixels to black to start
-    if clear_previous:
-        pixels.fill((0, 0, 0))
+    pixels.fill((0, 0, 0))
 
-    for led_num in range(leds):
+    for led_num in range(len(pixels)):
         led_state = frame["ledStates"].get(str(led_num))
         if led_state:
             pixels[led_num] = (led_state["r"], led_state["g"], led_state["b"])
@@ -68,20 +70,6 @@ class ScenePlayer:
         self._current_scene_id = None
         self._proc = None
 
-    def play_scene(self, scene: Scene):
-        self.stop_scene()
-
-        self._is_playing = True
-        self._current_scene_id = scene["id"]
-        self._proc = Process(
-            target=scene_loop,
-            args=(
-                scene["frames"],
-                scene["fps"],
-            ),
-        )
-        self._proc.start()
-
     def stop_scene(self):
         if self._proc:
             self._is_playing = False
@@ -93,14 +81,30 @@ class ScenePlayer:
         self._current_scene_id = None
         clear_pixels()
 
+    def play_scene(self, scene: Scene):
+        global pixels
+        self.stop_scene()
+
+        self._is_playing = True
+        self._current_scene_id = scene["id"]
+        pixels = neopixel.NeoPixel(
+            board.D18, len(scene["ledPositions"]), brightness=1, auto_write=False
+        )
+
+        self._proc = Process(
+            target=scene_loop,
+            args=(
+                scene["frames"],
+                scene["fps"],
+            ),
+        )
+        self._proc.start()
+
     def _update_status(self):
         if self._proc:
             is_exitted = self._proc.exitcode
             if is_exitted:
-                self._is_playing = False
-                self._current_scene_id = None
-                self._proc = None
-                clear_pixels()
+                self.stop_scene()
 
     def show_frame(self, scene: Scene, frame_num: int):
         # stop the current scene if it's playing
@@ -111,6 +115,25 @@ class ScenePlayer:
         self._update_status()
 
         return {"isPlaying": self._is_playing, "sceneId": self._current_scene_id}
+
+    def init_realtime_player(self, num_leds):
+        global pixels
+        self.stop_scene()
+        self._is_playing = True
+        self._current_scene_id = REALTIME_SCENE_ID
+        pixels = neopixel.NeoPixel(
+            board.D18, num_leds, brightness=0.2, auto_write=False
+        )
+
+    def set_pixels(self, output: list[tuple[int, int, int]]):
+        global pixels
+
+        if not (self._is_playing and self._current_scene_id == REALTIME_SCENE_ID):
+            raise Exception("Realtime player not initialized")
+
+        pixels.fill((0, 0, 0))
+        pixels[:] = output
+        pixels.show()
 
 
 player = ScenePlayer()

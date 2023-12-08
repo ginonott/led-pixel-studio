@@ -3,14 +3,20 @@ import { Container } from "./components";
 import { Icon, LinkIcon } from "./icons/icons";
 import SceneControls from "./scene-controls";
 import SceneToolbar from "./scene-toolbar";
+import SpotifyLogin from "./spotify-login";
 
 const Header = () => {
   return (
-    <h1 className="text-6xl">
-      <span className="text-red-500 animate-bounce">L</span>
-      <span className="text-green-500">E</span>
-      <span className="text-blue-500">D</span> Pixel Studio
-    </h1>
+    <div className="flex flex-row justify-between">
+      <h1 className="text-6xl">
+        <span className="text-red-500 animate-bounce">L</span>
+        <span className="text-green-500">E</span>
+        <span className="text-blue-500">D</span> Pixel Studio
+      </h1>
+      <div>
+        <SpotifyLogin />
+      </div>
+    </div>
   );
 };
 

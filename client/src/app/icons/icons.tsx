@@ -29,7 +29,9 @@ type Icons =
   | "arrow_back"
   | "arrow_forward"
   | "photo_frame"
-  | "cast";
+  | "cast"
+  | "graphic_eq"
+  | "edit";
 type Modifiers = "add" | "remove";
 
 export function Icon({
