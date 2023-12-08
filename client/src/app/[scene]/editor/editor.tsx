@@ -143,16 +143,18 @@ export default function SceneEditor({ scene: initialScene }: { scene: Scene }) {
           }}
         />
 
-        <Timeline
-          key={Math.random()}
-          frames={state.scene.frames}
-          selectedFrames={state.selectedFrames}
-          selectedLeds={state.selectedLeds}
-          onSelectFrame={(frame) => {
-            dispatch({ type: "select-frame", frame });
-          }}
-          fps={state.scene.fps}
-        />
+        <div className="flex flex-row overflow-y-auto">
+          <Timeline
+            key={Math.random()}
+            frames={state.scene.frames}
+            selectedFrames={state.selectedFrames}
+            selectedLeds={state.selectedLeds}
+            onSelectFrame={(frame) => {
+              dispatch({ type: "select-frame", frame });
+            }}
+            fps={state.scene.fps}
+          />
+        </div>
       </div>
     </DndContext>
   );

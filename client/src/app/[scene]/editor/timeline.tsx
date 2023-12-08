@@ -65,27 +65,25 @@ export default function Timeline({
         <div>Frames: {frames.length} </div>
         <div>Total Time: {(frames.length / fps).toFixed(2)}s</div>
       </div>
-      <div className="flex flex-row overflow-x-auto">
-        {frames.map((frame, indx) => {
-          const isPrimarySelected = primarySelectedFrame === frame;
-          return (
-            <div key={indx} className="relative">
-              {isPrimarySelected && (
-                <div className="absolute w-full flex flex-row justify-center -top-1">
-                  <CaretDiv />
-                </div>
-              )}
-              <Frame
-                frame={frame}
-                isPrimarySelected={isPrimarySelected}
-                isSecondarySelected={secondarySelectedFrames.includes(indx)}
-                selectedLeds={selectedLeds}
-                onClick={() => onSelectFrame(indx)}
-              />
-            </div>
-          );
-        })}
-      </div>
+      {frames.map((frame, indx) => {
+        const isPrimarySelected = primarySelectedFrame === frame;
+        return (
+          <div key={indx} className="relative">
+            {isPrimarySelected && (
+              <div className="absolute w-full flex flex-row justify-center -top-1">
+                <CaretDiv />
+              </div>
+            )}
+            <Frame
+              frame={frame}
+              isPrimarySelected={isPrimarySelected}
+              isSecondarySelected={secondarySelectedFrames.includes(indx)}
+              selectedLeds={selectedLeds}
+              onClick={() => onSelectFrame(indx)}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
