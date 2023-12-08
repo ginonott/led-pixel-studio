@@ -1,6 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import NextLink from "next/link";
-import { HTMLAttributes } from "react";
+import { ButtonHTMLAttributes, HTMLAttributes } from "react";
 
 export const Container = ({
   children,
@@ -53,11 +53,11 @@ export const Link = ({
 export const Button = ({
   children,
   variant = "default",
-  onClick,
+  ...rest
 }: React.PropsWithChildren<{
   variant: "primary" | "default" | "spotify";
-  onClick: () => void;
-}>) => {
+}> &
+  ButtonHTMLAttributes<HTMLButtonElement>) => {
   // return a button with tailwind classes styled in neobrutalist fashion
   const background =
     variant === "primary"
@@ -68,7 +68,7 @@ export const Button = ({
 
   return (
     <button
-      onClick={onClick}
+      {...rest}
       className={`border-2 border-b-4 border-r-4 border-black p-2 ${background} flex-row hover:saturate-150 shadow-brutalist active:shadow-none active:translate-x-[5px] active:translate-y-[5px]`}
     >
       {children}

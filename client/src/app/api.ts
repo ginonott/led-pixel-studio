@@ -1,13 +1,14 @@
 import { throttle } from "lodash";
 import { CurrentScene, Scene } from "./models";
 import { revalidatePath } from "next/cache";
+import { io, Socket } from "socket.io-client";
 
 function getHostName() {
   if (typeof window !== "undefined") {
-    return process.env.NEXT_PUBLIC_SERVER_HOSTNAME;
+    return process.env.NEXT_PUBLIC_SERVER_HOSTNAME as string;
   }
 
-  return process.env.NEXT_PUBLIC_CLIENT_HOSTNAME;
+  return process.env.NEXT_PUBLIC_CLIENT_HOSTNAME as string;
 }
 
 function fetchIt<T>(
@@ -120,3 +121,31 @@ async function setFrame(sceneId: string, frameNum: number): Promise<void> {
 export const throttledSetFrame = throttle(setFrame, 1000, {
   leading: true,
 });
+
+export async function copyScene(sceneId: string): Promise<{ id: string }> {
+  const response = await fetchIt<{ id: string }>(
+    `/scenes/${sceneId}/copy`,
+    {
+      method: "POST",
+    },
+    {}
+  );
+  revalidateHomepage();
+
+  return response;
+}
+
+let socket: WeakRef<Socket> | null = null;
+export function getSocketConnection() {
+  if (socket) {
+    return socket.deref();
+  }
+
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  socket = new WeakRef(io(`ws://${getHostName()}`));
+
+  return socket.deref();
+}

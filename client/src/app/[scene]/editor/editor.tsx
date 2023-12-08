@@ -2,7 +2,7 @@
 
 import { Draggable } from "@/app/Draggable";
 import { Frame, Scene } from "@/app/models";
-import { Dispatch, Ref, useReducer, useRef } from "react";
+import { Dispatch, Ref, useEffect, useReducer, useRef } from "react";
 import Led from "./led";
 import Timeline from "./timeline";
 import { DndContext, useDroppable } from "@dnd-kit/core";
@@ -22,9 +22,12 @@ import { EditorTools } from "./EditorTools";
 import {
   getAdditionalSelectedLeds,
   getAllSelectedLeds,
+  getNumberOfLeds,
   getSelectedLed,
 } from "./selectors";
+import { io, Socket } from "socket.io-client";
 import BrushCursor from "./brush.png";
+import { getSocketConnection } from "@/app/api";
 
 function calculateRelativePosition(
   canvasRect: DOMRect,
@@ -58,6 +61,22 @@ function Canvas({
     state.currentTool.type === "paint"
       ? `url(${BrushCursor.src}) 0 24, auto`
       : "auto";
+
+  useEffect(() => {
+    if (!state.isLiveEnabled) {
+      return;
+    }
+    const socket = getSocketConnection();
+
+    if (!socket) {
+      return;
+    }
+
+    socket?.emit("init_realtime", { leds: getNumberOfLeds(state) });
+    socket?.emit("set_frame", {
+      frame: state.scene.frames[state.currentFrame],
+    });
+  });
 
   return (
     <div
@@ -151,6 +170,7 @@ export default function SceneEditor({ scene: initialScene }: { scene: Scene }) {
     isPlaying: false,
     currentTool: DefaultSelectTool,
     currentFrame: 0,
+    isLiveEnabled: false,
   } as State);
 
   const { handleSave, lastSaved } = useSave(state);

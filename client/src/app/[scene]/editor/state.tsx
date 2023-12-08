@@ -39,6 +39,7 @@ export type State = {
   isMultiSelecting: boolean;
   isRangeSelecting: boolean;
   isPlaying: boolean;
+  isLiveEnabled: boolean;
 };
 
 type AddLedAction = {
@@ -129,7 +130,8 @@ type SetterActions<
     | "isMultiSelecting"
     | "isRangeSelecting"
     | "currentTool"
-    | "currentFrame",
+    | "currentFrame"
+    | "isLiveEnabled",
   V extends State[K] = State[K]
 > = {
   type: "set-state";
@@ -447,19 +449,16 @@ function deselectSecondaryFrames(state: State) {
 }
 
 function deleteSelectedFrames(state: State) {
-  const primarySelectedFrame = state.selectedFrames[0];
-  const selectedFrames = state.selectedFrames.sort((a, b) => b - a);
+  const primarySelectedFrame = state.currentFrame;
+  const selectedFrames = [primarySelectedFrame, ...state.selectedFrames].sort(
+    (a, b) => b - a
+  );
   for (const frame of selectedFrames) {
     state.scene.frames.splice(frame, 1);
   }
 
-  if (state.scene.frames.length === 0) {
-    state.scene.frames.push({
-      ledStates: {},
-    });
-  }
-
-  state.selectedFrames = [Math.max(primarySelectedFrame - 1, 0)];
+  state.currentFrame = Math.max(primarySelectedFrame - 1, 0);
+  state.selectedFrames = [];
 
   return state;
 }

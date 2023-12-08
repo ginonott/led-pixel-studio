@@ -6,8 +6,7 @@ from flask_socketio import SocketIO
 from .scene_player import player
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "secret!"
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 SceneQueryResult = namedtuple("Scene", ["id", "data"])
 
@@ -181,15 +180,38 @@ def show_frame():
         return jsonify({"error": "Scene not found"}), 404
 
 
+@app.route("/api/scenes/<int:scene_id>/copy", methods=["POST"])
+def copy_scene(scene_id):
+    con = sqlite3.connect("studio.db")
+    cur = con.cursor()
+
+    scene = get_scene_by_id(cur, scene_id)
+    if scene:
+        data = scene.data
+        next_id = get_last_scene_id(cur) + 1
+        data["id"] = next_id
+        cur.execute(
+            "INSERT INTO scenes (id, data) VALUES (?,?)",
+            (
+                next_id,
+                dumps(data),
+            ),
+        )
+        con.commit()
+        return jsonify({"id": next_id})
+    else:
+        return jsonify({"error": "Scene not found"}), 404
+
+
 # socket io
 @socketio.on("init_realtime")
 def handle_init_realtime_event(json):
-    print("received json: " + str(json))
+    player.init_realtime_player(json.get("leds"))
 
 
-@socketio.on("set_leds")
+@socketio.on("set_frame")
 def handle_set_leds_event(json):
-    print("received json: " + str(json))
+    player.set_live_frame(json.get("frame"))
 
 
 init_db()

@@ -75,6 +75,7 @@ export function EditorTools({
           text="select tool"
           disabled={disabled}
           color="positive"
+          depressed={state.currentTool.type === "select"}
           onClick={() => {
             dispatch({
               type: "set-state",
@@ -88,6 +89,8 @@ export function EditorTools({
           name="brush"
           text="Paint"
           disabled={disabled}
+          color="positive"
+          depressed={state.currentTool.type === "paint"}
           size="md"
           onClick={() => {
             dispatch({
@@ -102,6 +105,7 @@ export function EditorTools({
           text="LED Tool"
           disabled={disabled}
           color="positive"
+          depressed={state.currentTool.type === "add-led"}
           onClick={() => {
             dispatch({
               type: "set-state",
@@ -132,33 +136,16 @@ export function EditorTools({
         />
         <VerticalDivider />
         <IconButton
-          color="caution"
-          name="play_arrow"
-          text="Play Live"
-          size="md"
-          onClick={() => {
-            saveScene(state.scene).then(() => {
-              return playScene(state.scene.id);
-            });
-          }}
-        />
-        <IconButton
-          name="pause"
-          color="caution"
-          text="Stop Live"
-          size="md"
-          onClick={() => {
-            stopScene();
-          }}
-        />
-        <IconButton
           name="cast"
           color="caution"
-          text="Display"
+          text={state.isLiveEnabled ? "Stop Live" : "Enable Live"}
           size="md"
+          depressed={state.isLiveEnabled}
           onClick={() => {
-            saveScene(state.scene).then(() => {
-              return throttledSetFrame(state.scene.id, state.selectedFrames[0]);
+            dispatch({
+              type: "set-state",
+              key: "isLiveEnabled",
+              value: !state.isLiveEnabled,
             });
           }}
         />

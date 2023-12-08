@@ -125,7 +125,10 @@ class ScenePlayer:
             board.D18, num_leds, brightness=0.2, auto_write=False
         )
 
-    def set_pixels(self, output: list[tuple[int, int, int]]):
+    def set_live_frame(self, frame: Frame):
+        set_frame(frame)
+
+    def set_live_pixels(self, output: list[tuple[int, int, int]]):
         global pixels
 
         if not (self._is_playing and self._current_scene_id == REALTIME_SCENE_ID):

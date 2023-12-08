@@ -98,17 +98,6 @@ function LEDTools({
   state: State;
   dispatch: Dispatch<Action>;
 }) {
-  const [blinkInput, setBlinkInput] = useState({
-    times: 3,
-    framesOn: 3,
-    framesOff: 2,
-  });
-  const [glowInput, setGlowInput] = useState({
-    fromColor: "#ff0000",
-    toColor: "#00ff00",
-    frames: 30,
-  });
-
   const selectedLeds = getAllSelectedLeds(state);
 
   if (selectedLeds.length === 0) {
@@ -155,106 +144,119 @@ function LEDTools({
         />
       </Label>
       <HorizontalDivider />
-      <Label label="Blink Times: ">
-        <input
-          type="number"
-          value={blinkInput.times}
-          onChange={(event) => {
-            setBlinkInput({
-              ...blinkInput,
-              times: parseInt(event.target.value),
-            });
-          }}
-        />
-      </Label>
-      <Label label="Frames On: ">
-        <input
-          type="number"
-          value={blinkInput.framesOn}
-          onChange={(event) => {
-            setBlinkInput({
-              ...blinkInput,
-              framesOn: parseInt(event.target.value),
-            });
-          }}
-        />
-      </Label>
-      <Label label="Frames Off: ">
-        <input
-          type="number"
-          value={blinkInput.framesOff}
-          onChange={(event) => {
-            setBlinkInput({
-              ...blinkInput,
-              framesOff: parseInt(event.target.value),
-            });
-          }}
-        />
-      </Label>
-      <Button
-        variant="default"
-        onClick={() => {
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          const formData = new FormData(event.target as HTMLFormElement);
+          const color = formData.get("blink-color") as string;
+          const times = parseInt(formData.get("blink-times") as string);
+          const framesOn = parseInt(formData.get("blink-frames-on") as string);
+          const framesOff = parseInt(
+            formData.get("blink-frames-off") as string
+          );
           dispatch({
             type: "blink",
-            color: primaryColor,
-            times: 3,
-            framesOn: 3,
-            framesOff: 2,
+            color,
+            times,
+            framesOn,
+            framesOff,
           });
         }}
       >
-        Blink
-      </Button>
+        <Label label="Blink Times: ">
+          <input
+            type="number"
+            name="blink-times"
+            min={1}
+            defaultValue={3}
+            required
+          />
+        </Label>
+        <Label label="Frames On: ">
+          <input
+            type="number"
+            name="blink-frames-on"
+            min={1}
+            defaultValue={3}
+            required
+          />
+        </Label>
+        <Label label="Frames Off: ">
+          <input
+            type="number"
+            name="blink-frames-off"
+            min={0}
+            defaultValue={3}
+            required
+          />
+        </Label>
+        <Button
+          variant="default"
+          type="submit"
+          onClick={() => {
+            dispatch({
+              type: "blink",
+              color: primaryColor,
+              times: 3,
+              framesOn: 3,
+              framesOff: 2,
+            });
+          }}
+        >
+          Blink
+        </Button>
+      </form>
+
       <HorizontalDivider />
-      <Label label="From: ">
-        <input
-          type="color"
-          value={glowInput.fromColor}
-          onChange={(event) => {
-            setGlowInput({
-              ...glowInput,
-              fromColor: event.target.value,
-            });
-          }}
-        />
-      </Label>
-      <Label label="To: ">
-        <input
-          type="color"
-          value={glowInput.toColor}
-          onChange={(event) => {
-            setGlowInput({
-              ...glowInput,
-              toColor: event.target.value,
-            });
-          }}
-        />
-      </Label>
-      <Label label="Frames: ">
-        <input
-          type="number"
-          value={glowInput.frames}
-          onChange={(event) => {
-            setGlowInput({
-              ...glowInput,
-              frames: parseInt(event.target.value),
-            });
-          }}
-        />
-      </Label>
-      <Button
-        variant="default"
-        onClick={() => {
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          const formData = new FormData(event.target as HTMLFormElement);
+          const fromColor = formData.get("transistion-from-color") as string;
+          const toColor = formData.get("transistion-to-color") as string;
+          const frames = parseInt(formData.get("transistion-frames") as string);
           dispatch({
             type: "glow",
-            fromColor: glowInput.fromColor,
-            toColor: glowInput.toColor,
-            frames: glowInput.frames,
+            fromColor,
+            toColor,
+            frames,
           });
         }}
       >
-        Glow
-      </Button>
+        <Label label="From: ">
+          <input
+            type="color"
+            name="transistion-from-color"
+            required
+            defaultValue="#ff0000"
+          />
+        </Label>
+        <Label label="To: ">
+          <input
+            type="color"
+            name="transistion-to-color"
+            required
+            defaultValue="#00ff00"
+          />
+        </Label>
+        <Label label="Frames: ">
+          <input
+            type="number"
+            name="transistion-frames"
+            min={15}
+            required
+            defaultValue={15}
+          />
+        </Label>
+        <Button variant="default" type="submit" style={{ width: "100%" }}>
+          Glow
+        </Button>
+      </form>
+
       <HorizontalDivider />
       <div className="mx-8" />
       <Button
