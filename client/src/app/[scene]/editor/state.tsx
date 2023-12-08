@@ -140,7 +140,7 @@ type SetterActions<
 };
 
 type SceneSetterActions<
-  K extends keyof Scene = "fps" | "name",
+  K extends keyof Scene = "fps" | "name" | "brightness",
   V extends Scene[K] = Scene[K]
 > = {
   type: "set-scene-value";
@@ -421,7 +421,10 @@ function handleSetterAction(state: State, action: SetterActions) {
 }
 
 function handleSceneSetterAction<
-  K extends keyof Pick<Scene, "fps" | "name"> = "fps" | "name",
+  K extends keyof Pick<Scene, "fps" | "name" | "brightness"> =
+    | "fps"
+    | "name"
+    | "brightness",
   V extends Scene[K] = Scene[K]
 >(state: State, action: SceneSetterActions<K, V>) {
   if ((action.key === "fps" && (action.value as number) < 1) || !action.value) {

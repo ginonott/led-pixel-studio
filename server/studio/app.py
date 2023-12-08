@@ -99,7 +99,7 @@ def create_scene():
         "ledPositions": {},
         "frames": [{"ledStates": {}}],
         "fps": 5,
-        "brightness": 0.2,
+        "brightness": 20,
     }
 
     cur.execute(
@@ -206,7 +206,9 @@ def copy_scene(scene_id):
 # socket io
 @socketio.on("init_realtime")
 def handle_init_realtime_event(json):
-    player.init_realtime_player(json.get("leds"))
+    player.init_realtime_player(
+        num_leds=json.get("leds", 1), brightness=json.get("brightness", 20)
+    )
 
 
 @socketio.on("set_frame")

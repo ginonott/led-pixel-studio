@@ -17,6 +17,7 @@ export type Scene = {
   };
   frames: Frame[];
   fps: number;
+  brightness: number;
 };
 
 export type CurrentScene = {

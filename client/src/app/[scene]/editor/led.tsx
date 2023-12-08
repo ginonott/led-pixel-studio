@@ -9,6 +9,8 @@ export function isOff(ledState: LedState) {
   return !isOn(ledState);
 }
 
+export const LedSize = 28;
+
 export default function Led({
   ledPosition,
   ledState,
@@ -44,6 +46,8 @@ export default function Led({
         position: "absolute",
         left: `${ledPosition.relX}%`,
         top: `${ledPosition.relY}%`,
+        height: `${LedSize}px`,
+        width: `${LedSize}px`,
       }}
     >
       <div className="relative w-full h-full">

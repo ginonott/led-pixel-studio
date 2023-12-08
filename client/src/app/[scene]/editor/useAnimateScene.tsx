@@ -21,7 +21,7 @@ export function useAnimateScene(dispatch: Dispatch<Action>, state: State) {
       animationState.current.currentFrame = nextFrame;
       dispatch({ type: "select-frame", frame: nextFrame });
     }
-    const handle = setInterval(animation, 1000 / state.scene.fps);
+    const handle = setInterval(animation, 1000 / state?.scene?.fps || 1);
 
     return () => {
       clearInterval(handle);

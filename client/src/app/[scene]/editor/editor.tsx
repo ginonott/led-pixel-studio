@@ -3,10 +3,13 @@
 import { Draggable } from "@/app/Draggable";
 import { Frame, Scene } from "@/app/models";
 import { Dispatch, Ref, useEffect, useReducer, useRef } from "react";
-import Led from "./led";
+import Led, { LedSize } from "./led";
 import Timeline from "./timeline";
 import { DndContext, useDroppable } from "@dnd-kit/core";
-import { restrictToParentElement } from "@dnd-kit/modifiers";
+import {
+  restrictToParentElement,
+  createSnapModifier,
+} from "@dnd-kit/modifiers";
 import { ToolPanel } from "./tool-panel";
 import {
   State,
@@ -21,11 +24,9 @@ import { useSave } from "./useSave";
 import { EditorTools } from "./EditorTools";
 import {
   getAdditionalSelectedLeds,
-  getAllSelectedLeds,
   getNumberOfLeds,
   getSelectedLed,
 } from "./selectors";
-import { io, Socket } from "socket.io-client";
 import BrushCursor from "./brush.png";
 import { getSocketConnection } from "@/app/api";
 
@@ -72,7 +73,10 @@ function Canvas({
       return;
     }
 
-    socket?.emit("init_realtime", { leds: getNumberOfLeds(state) });
+    socket?.emit("init_realtime", {
+      leds: getNumberOfLeds(state),
+      brightness: state.scene.brightness,
+    });
     socket?.emit("set_frame", {
       frame: state.scene.frames[state.currentFrame],
     });
@@ -183,7 +187,10 @@ export default function SceneEditor({ scene: initialScene }: { scene: Scene }) {
 
   return (
     <DndContext
-      modifiers={[restrictToParentElement]}
+      modifiers={[
+        restrictToParentElement,
+        ...(state.isRangeSelecting ? [createSnapModifier(LedSize)] : []),
+      ]}
       onDragStart={(event) => {
         const led = event.active.id;
         dispatch({ type: "select-led", led: `${led}` });

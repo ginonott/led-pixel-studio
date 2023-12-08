@@ -4,13 +4,13 @@ import { HTMLAttributes } from "react";
 
 const MatieralOutlined = localFont({
   src: "./MaterialSymbolsOutlined.woff2",
-  display: "swap",
+  display: "block",
   weight: "400",
 });
 
 const MatieralSharp = localFont({
   src: "./MaterialSymbolsSharp.woff2",
-  display: "swap",
+  display: "block",
   weight: "400",
 });
 

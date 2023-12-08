@@ -5,13 +5,15 @@ function cleanup {
     kill $1 $2
 }
 
-cd client
-npm run dev &
-CLIENT_SERVER=$!
-
-cd ../server
+# start the server first so we can start asap
+cd server
 FLASK_APP=studio.app.py flask run -h 0.0.0.0 &
 API_SERVER=$!
+
+cd ../client
+npm run build
+npm run start &
+CLIENT_SERVER=$!
 
 # kill proceses on exit
 trap "cleanup $CLIENT_SERVER $API_SERVER" EXIT
