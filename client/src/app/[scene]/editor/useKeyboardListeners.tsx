@@ -9,6 +9,10 @@ export function useKeyboardListeners(dispatch: Dispatch<Action>, state: State) {
         dispatch({ type: "set-multi-selecting", isMultiSelecting: true });
       }
 
+      if (event.key.toLowerCase() === "c" && state.isMultiSelecting) {
+        dispatch({ type: "select-led", led: "all" });
+      }
+
       if (event.key === "Shift") {
         dispatch({ type: "set-range-selecting", isRangeSelecting: true });
       }

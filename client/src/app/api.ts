@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 
 function getHostName() {
   if (typeof window !== "undefined") {
-    return `${window.location.hostname}:5000`;
+    return process.env.NEXT_PUBLIC_SERVER_HOSTNAME;
   }
 
-  return "127.0.0.1:5000";
+  return process.env.NEXT_PUBLIC_CLIENT_HOSTNAME;
 }
 
 function fetchIt<T>(

@@ -179,6 +179,32 @@ function LEDTools({
       >
         Glow
       </Button>
+      <HorizontalDivider />
+      <div className="mx-8" />
+      <Button
+        variant="default"
+        onClick={() => {
+          dispatch({
+            type: "chase",
+            color: primaryColor,
+            frames: 30,
+          });
+        }}
+      >
+        Chase
+      </Button>
+      <div className="mx-8" />
+      <Button
+        variant="default"
+        onClick={() => {
+          dispatch({
+            type: "snake",
+            frames: 30,
+          });
+        }}
+      >
+        Snake
+      </Button>
     </div>
   );
 }

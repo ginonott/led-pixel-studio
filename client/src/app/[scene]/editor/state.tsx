@@ -62,6 +62,15 @@ type SetRangeSelectingAction = {
   type: "set-range-selecting";
   isRangeSelecting: boolean;
 };
+type ChaseAction = {
+  type: "chase";
+  color: string;
+  frames: number;
+};
+type SnakeAction = {
+  type: "snake";
+  frames: number;
+};
 
 type BlinkAction = {
   type: "blink";
@@ -114,7 +123,9 @@ export type Action =
   | GlowAction
   | SetRangeSelectingAction
   | SetterActions
-  | SceneSetterActions;
+  | SceneSetterActions
+  | ChaseAction
+  | SnakeAction;
 
 export const defaultLedState: LedState = {
   r: 0,
@@ -152,12 +163,29 @@ export function setLedPosition(state: State, action: SetLedPositionAction) {
 
 export function selectLed(state: State, action: SelectLedAction) {
   if (state.isMultiSelecting) {
-    if (state.selectedLeds.includes(action.led)) {
+    if (action.led === "all") {
+      state.selectedLeds = Object.keys(state.scene.ledPositions);
+    } else if (state.selectedLeds.includes(action.led)) {
       state.selectedLeds = state.selectedLeds.filter(
         (led) => led !== action.led
       );
     } else {
       state.selectedLeds.push(action.led);
+    }
+  } else if (state.isRangeSelecting) {
+    let start = Number.parseInt(
+      state.selectedLeds[state.selectedLeds.length - 1]
+    );
+    let end = Number.parseInt(action.led);
+
+    if (start > end) {
+      [start, end] = [end, start];
+    }
+
+    for (let i = start; i <= end; i++) {
+      if (!state.selectedLeds.includes(`${i}`)) {
+        state.selectedLeds.push(`${i}`);
+      }
     }
   } else {
     state.selectedLeds = [action.led];
@@ -377,6 +405,69 @@ function stop(state: State) {
   return state;
 }
 
+function chaseAnimatimation(state: State, action: ChaseAction) {
+  const colors = ["#ff0000", "#00ff00", "#0000ff"];
+  const frames = action.frames;
+
+  for (let i = 0; i < frames; i++) {
+    const currentFrame = state.selectedFrames[0] + i;
+
+    for (const led of state.selectedLeds) {
+      if (state.scene.frames[currentFrame] === undefined) {
+        state.scene.frames[currentFrame] = {
+          ledStates: {},
+        };
+      }
+
+      const color = colors[i % colors.length];
+      const { r, g, b } = hexToRgb(color)!;
+
+      state.scene.frames[currentFrame].ledStates[led] = { r, g, b };
+    }
+  }
+
+  return state;
+}
+
+function snakeAnimation(state: State, action: SnakeAction) {
+  const colors = ["#ff0000", "#00ff00", "#0000ff"];
+  const frames = action.frames;
+  let colorIndex = 0;
+  const snakeLength = 3;
+
+  for (let i = 0; i < frames; i++) {
+    const currentFrame = state.selectedFrames[0] + i;
+
+    if (state.scene.frames[currentFrame] === undefined) {
+      state.scene.frames[currentFrame] = {
+        ledStates: {},
+      };
+    }
+
+    const keys = Object.keys(state.scene.ledPositions);
+    const repeat = 5;
+
+    for (let led = 0; led < keys.length; led += repeat) {
+      const color = colors[colorIndex % colors.length];
+      colorIndex += 1;
+
+      delete state.scene.frames[currentFrame].ledStates[led];
+
+      for (let snake = 0; snake < snakeLength; snake++) {
+        const ledIndex = led + snake;
+        if (ledIndex < keys.length) {
+          console.log(`settiing ${ledIndex} to ${color}`);
+          const colorHex = hexToRgb(color)!;
+          state.scene.frames[currentFrame].ledStates[`${ledIndex}`] = colorHex;
+        }
+      }
+    }
+    break;
+  }
+
+  return state;
+}
+
 function exhaustiveSwitch(_: never) {}
 
 export function reducer(state: State, action: Action): State {
@@ -442,6 +533,12 @@ export function reducer(state: State, action: Action): State {
       break;
     case "set-scene-value":
       newState = handleSceneSetterAction(newState, action);
+      break;
+    case "chase":
+      newState = chaseAnimatimation(newState, action);
+      break;
+    case "snake":
+      newState = snakeAnimation(newState, action);
       break;
     default:
       exhaustiveSwitch(action);
