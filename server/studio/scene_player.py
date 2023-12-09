@@ -15,7 +15,7 @@ DEFAULT_LEDS = 50
 
 REALTIME_SCENE_ID = -525
 
-pixels = neopixel.NeoPixel(board.D18, DEFAULT_LEDS, brightness=0.2, auto_write=False)
+pixels = neopixel.NeoPixel(board.D18, DEFAULT_LEDS, brightness=0.5, auto_write=False)
 
 
 def set_frame(frame: Frame, clear_previous=True):
@@ -87,12 +87,6 @@ class ScenePlayer:
 
         self._is_playing = True
         self._current_scene_id = scene["id"]
-        pixels = neopixel.NeoPixel(
-            board.D18,
-            len(scene["ledPositions"]),
-            brightness=max(min(scene["brightness"], 1), 100) / 100,
-            auto_write=False,
-        )
 
         self._proc = Process(
             target=scene_loop,
@@ -120,23 +114,14 @@ class ScenePlayer:
         return {"isPlaying": self._is_playing, "sceneId": self._current_scene_id}
 
     def init_realtime_player(self, num_leds, brightness):
-        global pixels
         self.stop_scene()
         self._is_playing = True
         self._current_scene_id = REALTIME_SCENE_ID
-        pixels = neopixel.NeoPixel(
-            board.D18,
-            num_leds,
-            brightness=max(min(brightness, 1), 100) / 100,
-            auto_write=False,
-        )
 
     def set_live_frame(self, frame: Frame):
         set_frame(frame)
 
     def set_live_pixels(self, output: list[tuple[int, int, int]]):
-        global pixels
-
         if not (self._is_playing and self._current_scene_id == REALTIME_SCENE_ID):
             raise Exception("Realtime player not initialized")
 
