@@ -30,3 +30,7 @@ export function getAllSelectedLeds(state: State): string[] {
 export function getNumberOfLeds(state: State) {
   return Object.keys(state.scene.ledPositions).length;
 }
+
+export function getAllSelectedFrames(state: State) {
+  return [state.currentFrame, ...state.selectedFrames];
+}

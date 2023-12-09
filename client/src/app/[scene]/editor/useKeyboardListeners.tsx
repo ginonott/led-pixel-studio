@@ -22,8 +22,16 @@ export function useKeyboardListeners(dispatch: Dispatch<Action>, state: State) {
         dispatch({ type: "deselect-secondary-frames" });
       }
 
-      if (event.key === "Delete") {
+      if (event.key === "Delete" || event.key === "Backspace") {
         dispatch({ type: "delete-selected-frames" });
+      }
+
+      if (event.key.toLowerCase() === "c" && event.metaKey) {
+        dispatch({ type: "copy-selected-frames" });
+      }
+
+      if (event.key.toLowerCase() === "v" && event.metaKey) {
+        dispatch({ type: "paste-selected-frames" });
       }
 
       if (event.key === "ArrowRight") {

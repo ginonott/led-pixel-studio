@@ -3,7 +3,7 @@ import { Frame, LedState, Scene } from "@/app/models";
 import { isOff } from "./led";
 import { hexToRgb } from "@/app/utils";
 import { cloneDeep } from "lodash";
-import { getAllSelectedLeds } from "./selectors";
+import { getAllSelectedFrames, getAllSelectedLeds } from "./selectors";
 
 type Tool<
   Type extends string = "generic",
@@ -36,6 +36,7 @@ export type State = {
   currentTool: SelectTool | PaintTool | AddLedTool;
   currentFrame: number;
   selectedFrames: number[];
+  copiedFrames: Frame[];
   isMultiSelecting: boolean;
   isRangeSelecting: boolean;
   isPlaying: boolean;
@@ -109,6 +110,12 @@ type SnakeAction = {
   type: "snake";
   frames: number;
 };
+type CopySelectedFramesAction = {
+  type: "copy-selected-frames";
+};
+type PasteSelectedFramesAction = {
+  type: "paste-selected-frames";
+};
 
 type BlinkAction = {
   type: "blink";
@@ -169,7 +176,9 @@ export type Action =
   | SetterActions
   | SceneSetterActions
   | ChaseAction
-  | SnakeAction;
+  | SnakeAction
+  | CopySelectedFramesAction
+  | PasteSelectedFramesAction;
 
 export const defaultLedState: LedState = {
   r: 0,
@@ -261,9 +270,11 @@ function deselectAllLeds(state: State, action: DeslectAllLedsAction) {
 }
 
 function setLedColor(state: State, action: SetLedColorAction) {
+  console.log("setting led color", action);
   const selectedLeds = action.led ? [action.led] : getAllSelectedLeds(state);
+  const selectedFrames = getAllSelectedFrames(state);
 
-  for (const frame of state.selectedFrames) {
+  for (const frame of selectedFrames) {
     for (const led of selectedLeds) {
       const { r, g, b } = hexToRgb(action.color)!;
 
@@ -319,7 +330,7 @@ function glow(state: State, action: GlowAction) {
   let { r: fromR, g: fromG, b: fromB } = hexToRgb(action.fromColor)!;
   let { r: toR, g: toG, b: toB } = hexToRgb(action.toColor)!;
 
-  let startingFrame = state.selectedFrames[0];
+  let startingFrame = state.currentFrame;
   const totalFrames = action.frames;
 
   for (let i = 0; i < totalFrames; i++) {
@@ -427,7 +438,7 @@ function handleSceneSetterAction<
     | "brightness",
   V extends Scene[K] = Scene[K]
 >(state: State, action: SceneSetterActions<K, V>) {
-  if ((action.key === "fps" && (action.value as number) < 1) || !action.value) {
+  if (action.key === "fps" && (action.value as number) < 1) {
     (state.scene[action.key] as any) = 1;
     return state;
   }
@@ -547,6 +558,30 @@ function snakeAnimation(state: State, action: SnakeAction) {
   return state;
 }
 
+function handleCopySelectedFrames(state: State) {
+  const selectedFrames = getAllSelectedFrames(state);
+  const copiedFrames = selectedFrames.map((frame) =>
+    cloneDeep(state.scene.frames[frame])
+  );
+
+  state.copiedFrames = copiedFrames;
+
+  return state;
+}
+
+function handlePasteSelectedFrames(state: State) {
+  const selectedFrames = getAllSelectedFrames(state);
+  const copiedFrames = state.copiedFrames;
+
+  if (selectedFrames.length === 0 || copiedFrames.length === 0) {
+    return state;
+  }
+
+  state.scene.frames.splice(state.currentFrame + 1, 0, ...copiedFrames);
+
+  return state;
+}
+
 function exhaustiveSwitch(_: never) {}
 
 export function reducer(state: State, action: Action): State {
@@ -621,6 +656,12 @@ export function reducer(state: State, action: Action): State {
       break;
     case "snake":
       newState = snakeAnimation(newState, action);
+      break;
+    case "copy-selected-frames":
+      newState = handleCopySelectedFrames(newState);
+      break;
+    case "paste-selected-frames":
+      newState = handlePasteSelectedFrames(newState);
       break;
     default:
       exhaustiveSwitch(action);

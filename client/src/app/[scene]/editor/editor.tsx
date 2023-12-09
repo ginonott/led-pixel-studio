@@ -55,7 +55,7 @@ function Canvas({
     id: "droppable",
   });
 
-  const selectedFrame: Frame = state.scene.frames[state.selectedFrames[0] ?? 0];
+  const selectedFrame: Frame = state.scene.frames[state.currentFrame];
   const selectedLed = getSelectedLed(state);
   const additionalSelectedLeds = getAdditionalSelectedLeds(state);
   const cursorStyle =
@@ -175,6 +175,7 @@ export default function SceneEditor({ scene: initialScene }: { scene: Scene }) {
     currentTool: DefaultSelectTool,
     currentFrame: 0,
     isLiveEnabled: false,
+    copiedFrames: [],
   } as State);
 
   const { handleSave, lastSaved } = useSave(state);

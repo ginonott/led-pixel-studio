@@ -54,7 +54,7 @@ export function EditorTools({
         }}
       />
       <input
-        placeholder="Scene Name"
+        placeholder={`Untitled Scene ${state.scene.id}`}
         value={state.scene.name}
         onChange={(val) => {
           dispatch({
