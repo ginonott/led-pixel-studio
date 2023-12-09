@@ -75,7 +75,7 @@ function ToolPanelContainer({ children }: { children: React.ReactNode }) {
   const [isOpen, open] = useState(true);
 
   return (
-    <div className="absolute top-4 left-4 w-[20vw] border-2 border-black cursor-default max-h-[80vh] overflow-y-auto">
+    <div className="absolute top-4 left-4 w-[20vw] border-2 border-black cursor-default max-h-[50vh] overflow-y-auto">
       <div className="border-b-2 border-black flex flex-row items-center">
         <IconButton
           size="sm"
