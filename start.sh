@@ -11,8 +11,7 @@ FLASK_APP=studio.app.py flask run -h 0.0.0.0 &
 API_SERVER=$!
 
 cd ../client
-npm run build
-npm run start &
+npm run dev &
 CLIENT_SERVER=$!
 
 # kill proceses on exit
