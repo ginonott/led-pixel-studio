@@ -2,8 +2,8 @@
 function cleanup {
     echo "Exiting..."
 
-    kill ps aux | grep flask | awk '{print $2}' | xargs | kill -s SIGTERM
-    kill ps aux | grep next | awk '{print $2}' | xargs | kill -s SIGTERM
+    ps aux | grep flask | awk '{print $2}' | xargs | kill -s SIGTERM
+    ps aux | grep next | awk '{print $2}' | xargs | kill -s SIGTERM
 }
 
 # start the server first so we can start asap
