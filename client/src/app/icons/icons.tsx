@@ -47,10 +47,21 @@ type Icons =
   | "graphic_eq"
   | "edit"
   | "arrow_selector_tool"
-  | "brush";
+  | "brush"
+  | "content_copy";
 
 function getSpanIconClass(icon: Icons) {
-  if (["arrow_selector_tool", "remove", "add", "brush"].includes(icon)) {
+  if (
+    (
+      [
+        "arrow_selector_tool",
+        "remove",
+        "add",
+        "brush",
+        "content_copy",
+      ] as Icons[]
+    ).includes(icon)
+  ) {
     return MatieralOutlined.className;
   }
 

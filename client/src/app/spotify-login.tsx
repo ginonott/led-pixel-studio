@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./components";
-import { Icon } from "./icons/icons";
+import { useRouter } from "next/navigation";
 
 function generateRandomString(length: number) {
   const possible =
@@ -23,12 +23,19 @@ function base64encode(input: ArrayBuffer) {
     .replace(/\//g, "_");
 }
 
+export function isTokenExpired() {
+  return (
+    Date.now() >
+    parseInt(window.localStorage.getItem("access_token_expiration") || "0")
+  );
+}
+
 export default function SpotifyLogin() {
   const [expired, setExpired] = useState<boolean>(false);
+  const router = useRouter();
+
   useEffect(() => {
-    const expired =
-      Date.now() >
-      parseInt(window.localStorage.getItem("access_token_expiration") || "0");
+    const expired = isTokenExpired();
 
     if (expired) {
       [
@@ -42,7 +49,16 @@ export default function SpotifyLogin() {
   }, []);
 
   if (!expired) {
-    return null;
+    return (
+      <Button
+        variant="spotify"
+        onClick={() => {
+          router.push("/visualizer");
+        }}
+      >
+        Spotify Visualizer
+      </Button>
+    );
   }
 
   return (

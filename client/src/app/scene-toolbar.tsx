@@ -4,19 +4,14 @@ import { useRouter } from "next/navigation";
 import { PropsWithoutRef, useEffect, useState } from "react";
 import { IconButton } from "./icons/icons";
 import { Scene } from "./models";
-import { deleteScene, playScene } from "./api";
+import { copyScene, deleteScene, playScene } from "./api";
 
 export default function SceneToolbar({
   scene,
 }: PropsWithoutRef<{ scene: Scene }>) {
   const router = useRouter();
-  const [isLoggedIntoSpotify, setIsLoggedIntoSpotify] =
-    useState<boolean>(false);
-
-  useEffect(() => {
-    setIsLoggedIntoSpotify(!!window.localStorage.getItem("access_token"));
-  }, []);
-
+  const [copying, setCopying] = useState<boolean>(false);
+  const deleteDisabled = scene.name.toLowerCase().includes("do not delete");
   return (
     <div>
       <IconButton
@@ -35,22 +30,38 @@ export default function SceneToolbar({
         }}
       />
       <IconButton
+        name="content_copy"
+        disabled={copying}
+        onClick={() => {
+          if (copying) {
+            return;
+          }
+
+          setCopying(true);
+          copyScene(scene.id)
+            .then(() => {
+              router.refresh();
+            })
+            .finally(() => {
+              setCopying(false);
+            });
+        }}
+      />
+      <div />
+      <IconButton
         name="delete"
         color="negative"
+        disabled={deleteDisabled}
+        title={
+          deleteDisabled
+            ? "Remove 'do not delete' to delete this scene"
+            : undefined
+        }
         onClick={() => {
           deleteScene(scene.id).then(() => {
             router.refresh();
           });
         }}
-      />
-      <IconButton
-        name="graphic_eq"
-        disabled={!isLoggedIntoSpotify}
-        color="positive"
-        title={
-          isLoggedIntoSpotify ? "" : "Log into Spotify to use this feature"
-        }
-        onClick={() => {}}
       />
     </div>
   );

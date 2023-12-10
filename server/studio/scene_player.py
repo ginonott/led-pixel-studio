@@ -15,7 +15,7 @@ DEFAULT_LEDS = 50
 
 REALTIME_SCENE_ID = -525
 
-pixels = neopixel.NeoPixel(board.D18, DEFAULT_LEDS, brightness=0.5, auto_write=False)
+pixels = neopixel.NeoPixel(board.D18, DEFAULT_LEDS, brightness=1, auto_write=False)
 
 
 def set_frame(frame: Frame, clear_previous=True):
