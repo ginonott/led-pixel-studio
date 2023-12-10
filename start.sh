@@ -2,8 +2,8 @@
 function cleanup {
     echo "Cleaning up..."
 
-    ps aux | grep flask | awk '{print $2}' | xargs | kill -s SIGTERM
-    ps aux | grep next | awk '{print $2}' | xargs | kill -s SIGTERM
+    for pid in $(ps -ef | grep "next" | awk '{print $2}'); do kill -9 $pid; done
+    for pid in $(ps -ef | grep "flask" | awk '{print $2}'); do kill -9 $pid; done
 }
 
 # clean up any previous instances
