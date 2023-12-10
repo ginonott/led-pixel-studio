@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 function cleanup {
-    echo "Exiting..."
+    echo "Cleaning up..."
 
     ps aux | grep flask | awk '{print $2}' | xargs | kill -s SIGTERM
     ps aux | grep next | awk '{print $2}' | xargs | kill -s SIGTERM
 }
+
+# clean up any previous instances
+cleanup
 
 # start the server first so we can start asap
 cd server
