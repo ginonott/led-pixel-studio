@@ -2,15 +2,18 @@
 function cleanup {
     echo "Exiting..."
 
-    kill $1 $2
+    kill ps aux | grep flask | awk '{print $2}' | xargs | kill -s SIGTERM
+    kill ps aux | grep next | awk '{print $2}' | xargs | kill -s SIGTERM
 }
 
 # start the server first so we can start asap
 cd server
+pip install -r requirements.txt
 FLASK_APP=studio.app.py flask run -h 0.0.0.0 &
 API_SERVER=$!
 
 cd ../client
+npm i
 npm run dev &
 CLIENT_SERVER=$!
 

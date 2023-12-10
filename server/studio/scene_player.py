@@ -1,3 +1,4 @@
+import os
 from multiprocessing import Process
 from time import sleep
 from .models import Frame, Scene
@@ -11,11 +12,12 @@ except ImportError:
     import studio.stubs.board as board
     import studio.stubs.neopixel as neopixel
 
-DEFAULT_LEDS = 50
+LEDS = int(os.environ.get("LEDS", "38"))
+BRIGHTNESS = float(os.environ.get("BRIGHTNESS", 1))
 
 REALTIME_SCENE_ID = -525
 
-pixels = neopixel.NeoPixel(board.D18, DEFAULT_LEDS, brightness=1, auto_write=False)
+pixels = neopixel.NeoPixel(board.D18, LEDS, brightness=BRIGHTNESS, auto_write=False)
 
 
 def set_frame(frame: Frame, clear_previous=True):
