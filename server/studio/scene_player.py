@@ -12,7 +12,7 @@ except ImportError:
     import studio.stubs.board as board
     import studio.stubs.neopixel as neopixel
 
-LEDS = int(os.environ.get("LEDS", "38"))
+LEDS = int(os.environ.get("LEDS", "41"))
 BRIGHTNESS = float(os.environ.get("BRIGHTNESS", 1))
 
 REALTIME_SCENE_ID = -525
