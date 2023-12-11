@@ -12,7 +12,7 @@ cleanup
 # start the server first so we can start asap
 cd server
 pip install -r requirements.txt
-FLASK_APP=studio.app.py flask run -h 0.0.0.0 &
+FLASK_APP=studio.app.py flask run -h 0.0.0.0 --reload &
 API_SERVER=$!
 
 cd ../client
