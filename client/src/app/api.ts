@@ -3,19 +3,11 @@ import { CurrentScene, Scene } from "./models";
 import { revalidateTag } from "next/cache";
 import { io, Socket } from "socket.io-client";
 
-function getHostName() {
+function getApiURL() {
   if (typeof window !== "undefined") {
-    console.debug(
-      "window is undefined, using server hostname",
-      process.env.NEXT_PUBLIC_SERVER_HOSTNAME
-    );
     return process.env.NEXT_PUBLIC_SERVER_HOSTNAME as string;
   }
 
-  console.debug(
-    "window is defined, using client hostname",
-    process.env.NEXT_PUBLIC_CLIENT_HOSTNAME
-  );
   return process.env.NEXT_PUBLIC_CLIENT_HOSTNAME as string;
 }
 
@@ -24,7 +16,7 @@ function fetchIt<T>(
   fetchOptions: RequestInit = {},
   data?: object
 ): Promise<T> {
-  const url = `http://${getHostName()}/api${path}`;
+  const url = `${getApiURL()}/api${path}`;
   console.log("API URL", url);
   return fetch(url, {
     ...fetchOptions,
