@@ -18,8 +18,14 @@ def init_db():
     cur.execute(
         "CREATE TABLE IF NOT EXISTS scenes (id INTEGER PRIMARY KEY, data JSON NOT NULL)"
     )
-    cur.execute("ALTER TABLE scenes ADD COLUMN IF NOT EXISTS locked INTEGER DEFAULT 0")
     con.commit()
+
+    try:
+        cur = con.cursor()
+        cur.execute("ALTER TABLE scenes ADD COLUMN locked INTEGER DEFAULT 0")
+        con.commit()
+    except Exception:
+        pass
 
 
 @app.after_request
