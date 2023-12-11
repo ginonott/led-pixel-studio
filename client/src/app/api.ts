@@ -1,6 +1,6 @@
 import { throttle } from "lodash";
 import { CurrentScene, Scene } from "./models";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { io, Socket } from "socket.io-client";
 
 function getHostName() {
@@ -27,6 +27,9 @@ function fetchIt<T>(
       "Content-Type": "application/json",
     },
     body: data ? JSON.stringify(data) : undefined,
+    next: {
+      tags: ["api"],
+    },
   }).then((res) => res.json());
 }
 
@@ -35,7 +38,7 @@ function revalidateHomepage() {
     return;
   }
 
-  revalidatePath("/");
+  revalidateTag("api");
 }
 
 export async function getScene(sceneId: string): Promise<Scene> {
@@ -133,6 +136,13 @@ export async function copyScene(sceneId: string): Promise<{ id: string }> {
   revalidateHomepage();
 
   return response;
+}
+
+export async function lockScene(sceneId: string): Promise<void> {
+  await fetchIt(`/scenes/${sceneId}/lock`, {
+    method: "POST",
+  });
+  revalidateHomepage();
 }
 
 let socket: WeakRef<Socket> | null = null;

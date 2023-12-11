@@ -18,6 +18,7 @@ def init_db():
     cur.execute(
         "CREATE TABLE IF NOT EXISTS scenes (id INTEGER PRIMARY KEY, data JSON NOT NULL)"
     )
+    cur.execute("ALTER TABLE scenes ADD COLUMN IF NOT EXISTS locked INTEGER DEFAULT 0")
     con.commit()
 
 
@@ -125,6 +126,26 @@ def update_scene(scene_id):
     ).fetchone()
     con.commit()
     return jsonify({"id": scene_id})
+
+
+@app.route("/api/scenes/<int:scene_id>/lock", methods=["POST"])
+def lock_scene(scene_id):
+    con = sqlite3.connect("studio.db")
+    cur = con.cursor()
+
+    cur.execute("UPDATE scenes SET locked = 1 WHERE id = ?", (scene_id,)).fetchone()
+    con.commit()
+    return jsonify({})
+
+
+@app.route("/api/scenes/<int:scene_id>/unlock", methods=["POST"])
+def unlock_scene(scene_id):
+    con = sqlite3.connect("studio.db")
+    cur = con.cursor()
+
+    cur.execute("UPDATE scenes SET locked = 0 WHERE id = ?", (scene_id,)).fetchone()
+    con.commit()
+    return jsonify({})
 
 
 @app.route("/api/scenes/<int:scene_id>", methods=["DELETE"])
