@@ -1,8 +1,8 @@
 "use client";
-import { Dispatch, useEffect } from "react";
-import { State, Action } from "./state";
+import { useEffect } from "react";
+import { State, Dispatch } from "./state";
 
-export function useKeyboardListeners(dispatch: Dispatch<Action>, state: State) {
+export function useKeyboardListeners(dispatch: Dispatch, state: State) {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Meta") {
@@ -36,11 +36,20 @@ export function useKeyboardListeners(dispatch: Dispatch<Action>, state: State) {
 
       if (event.key === "ArrowRight") {
         const selectedFrame = state.currentFrame;
-
-        dispatch({
-          type: "select-frame",
-          frame: Math.min(selectedFrame + 1, state.scene.frames.length - 1),
-        });
+        if (selectedFrame === state.scene.frames.length - 1) {
+          dispatch({
+            type: "composite-action",
+            payload: [
+              { type: "add-frame" },
+              { type: "select-frame", frame: selectedFrame + 1 },
+            ],
+          });
+        } else {
+          dispatch({
+            type: "select-frame",
+            frame: Math.min(selectedFrame + 1, state.scene.frames.length - 1),
+          });
+        }
       }
 
       if (event.key === "ArrowLeft") {

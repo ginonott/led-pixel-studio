@@ -4,6 +4,7 @@ import { isOff } from "./led";
 import { hexToRgb } from "@/app/utils";
 import { cloneDeep } from "lodash";
 import { getAllSelectedFrames, getAllSelectedLeds } from "./selectors";
+import { Dispatch as _Dispatch } from "react";
 
 type Tool<
   Type extends string = "generic",
@@ -179,6 +180,13 @@ export type Action =
   | SnakeAction
   | CopySelectedFramesAction
   | PasteSelectedFramesAction;
+
+export type CompositeAction = {
+  type: "composite-action";
+  payload: Action[];
+};
+
+export type Dispatch = _Dispatch<Action | CompositeAction>;
 
 export const defaultLedState: LedState = {
   r: 0,
@@ -584,7 +592,16 @@ function handlePasteSelectedFrames(state: State) {
 
 function exhaustiveSwitch(_: never) {}
 
-export function reducer(state: State, action: Action): State {
+export function reducer(state: State, action: Action | CompositeAction): State {
+  if (action.type === "composite-action") {
+    let newState = cloneDeep(state);
+    for (const subAction of action.payload) {
+      newState = reducer(newState, subAction);
+    }
+
+    return newState;
+  }
+
   if (
     state.isPlaying &&
     !(["stop", "select-frame"] as Array<Action["type"]>).includes(action.type)
