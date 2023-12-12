@@ -3,8 +3,8 @@ import { CurrentScene, Scene } from "./models";
 import { revalidateTag } from "next/cache";
 import { io, Socket } from "socket.io-client";
 
-function getApiURL() {
-  if (typeof window !== "undefined") {
+function getHostName() {
+  if (typeof window !== "undefined") {)
     return process.env.NEXT_PUBLIC_SERVER_HOSTNAME as string;
   }
 
@@ -16,7 +16,7 @@ function fetchIt<T>(
   fetchOptions: RequestInit = {},
   data?: object
 ): Promise<T> {
-  const url = `${getApiURL()}/api${path}`;
+  const url = `http://${getHostName()}/api${path}`;
   console.log("API URL", url);
   return fetch(url, {
     ...fetchOptions,
