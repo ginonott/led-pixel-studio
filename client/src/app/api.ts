@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 import { io, Socket } from "socket.io-client";
 
 function getHostName() {
-  if (typeof window !== "undefined") {)
+  if (typeof window !== "undefined") {
     return process.env.NEXT_PUBLIC_SERVER_HOSTNAME as string;
   }
 
