@@ -29,9 +29,9 @@ export default function Led({
   const on = isOn(ledState);
 
   const border = isPrimarySelected
-    ? "border-2 border-green-400"
+    ? "border-[2px] border-green-400"
     : isSecondarySelected
-    ? "border-[1px] border-blue-400"
+    ? "border-[2px] border-blue-400"
     : "border-[1px] border-black";
 
   return (

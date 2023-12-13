@@ -36,7 +36,7 @@ export function useKeyboardListeners(dispatch: Dispatch, state: State) {
 
       if (event.key === "ArrowRight") {
         const selectedFrame = state.currentFrame;
-        if (selectedFrame === state.scene.frames.length - 1) {
+        if (selectedFrame === state.scene.frames.length - 1 && event.metaKey) {
           dispatch({
             type: "composite-action",
             payload: [

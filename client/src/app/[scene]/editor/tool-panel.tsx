@@ -2,13 +2,15 @@
 import { Button, Container, HorizontalDivider, Label } from "@/app/components";
 import { IconButton } from "@/app/icons/icons";
 import { rgbToHex } from "@/app/utils";
-import { Dispatch, useState } from "react";
+import { Dispatch, useRef, useState } from "react";
 import { isOn } from "./led";
 import { Action, State, getPrimarySelectedLedState } from "./state";
 import { getAllSelectedLeds } from "./selectors";
 
 // 10 shades of blue, red, green, yellow, cyan, magenta
 const colors = [
+  "#000000",
+  "#ffffff",
   "#ff0000",
   "#ff1a1a",
   "#ff3333",
@@ -75,7 +77,7 @@ function ToolPanelContainer({ children }: { children: React.ReactNode }) {
   const [isOpen, open] = useState(true);
 
   return (
-    <div className="absolute top-4 left-4 w-[20vw] border-2 border-black cursor-default max-h-[50vh] overflow-y-auto">
+    <div className="absolute top-4 left-4 w-[25vw] border-2 border-black cursor-default max-h-[50vh] overflow-y-auto overflow-x-clip">
       <div className="border-b-2 border-black flex flex-row items-center">
         <IconButton
           size="sm"
@@ -84,9 +86,7 @@ function ToolPanelContainer({ children }: { children: React.ReactNode }) {
         />
         <div className="ml-2">Tools</div>
       </div>
-      <div className="max-h-[80vh] overflow-y-auto p-2">
-        {isOpen && children}
-      </div>
+      <div className="max-h-[80vh] p-2">{isOpen && children}</div>
     </div>
   );
 }
@@ -99,6 +99,10 @@ function LEDTools({
   dispatch: Dispatch<Action>;
 }) {
   const selectedLeds = getAllSelectedLeds(state);
+  const transitionInputs = useRef<{
+    from: HTMLInputElement | null;
+    to: HTMLInputElement | null;
+  }>({ from: null, to: null });
 
   if (selectedLeds.length === 0) {
     return (
@@ -219,6 +223,9 @@ function LEDTools({
           const fromColor = formData.get("transistion-from-color") as string;
           const toColor = formData.get("transistion-to-color") as string;
           const frames = parseInt(formData.get("transistion-frames") as string);
+
+          window.localStorage.setItem("transition-frames", frames.toString());
+
           dispatch({
             type: "glow",
             fromColor,
@@ -232,29 +239,62 @@ function LEDTools({
             type="color"
             name="transistion-from-color"
             required
-            defaultValue="#ff0000"
+            defaultValue={primaryColor}
+            ref={(el) => {
+              transitionInputs.current.from = el;
+            }}
           />
         </Label>
+
         <Label label="To: ">
           <input
             type="color"
             name="transistion-to-color"
             required
-            defaultValue="#00ff00"
+            defaultValue={primaryColor}
+            ref={(el) => {
+              transitionInputs.current.to = el;
+            }}
           />
         </Label>
+
         <Label label="Frames: ">
           <input
             type="number"
             name="transistion-frames"
-            min={15}
+            min={5}
             required
-            defaultValue={15}
+            defaultValue={Number(
+              window.localStorage.getItem("transition-frames") ?? "15"
+            )}
           />
         </Label>
-        <Button variant="default" type="submit" style={{ width: "100%" }}>
-          Glow
-        </Button>
+        <div className="flex flex-row gap-2">
+          <Button variant="default" type="submit" style={{ width: "100%" }}>
+            Transisition
+          </Button>
+          <IconButton
+            name="swap_vert"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              const [from, to] = [
+                transitionInputs.current.from,
+                transitionInputs.current.to,
+              ];
+
+              if (from && to) {
+                const fromColor = from.value;
+                const toColor = to.value;
+
+                from.value = toColor;
+                to.value = fromColor;
+              }
+            }}
+            size="sm"
+          />
+        </div>
       </form>
 
       <HorizontalDivider />

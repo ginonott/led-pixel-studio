@@ -48,7 +48,8 @@ type Icons =
   | "edit"
   | "arrow_selector_tool"
   | "brush"
-  | "content_copy";
+  | "content_copy"
+  | "swap_vert";
 
 function getSpanIconClass(icon: Icons) {
   if (
@@ -59,6 +60,7 @@ function getSpanIconClass(icon: Icons) {
         "add",
         "brush",
         "content_copy",
+        "swap_vert",
       ] as Icons[]
     ).includes(icon)
   ) {
@@ -182,7 +184,7 @@ export function IconButton({
   title,
   ...props
 }: {
-  onClick: () => void;
+  onClick: HTMLAttributes<HTMLButtonElement>["onClick"];
   title?: string;
   text?: string;
 } & React.ComponentProps<typeof Icon>) {

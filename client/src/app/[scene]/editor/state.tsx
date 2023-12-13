@@ -360,28 +360,6 @@ function glow(state: State, action: GlowAction) {
     }
   }
 
-  [fromR, fromG, fromB, toR, toG, toB] = [toR, toG, toB, fromR, fromG, fromB];
-  startingFrame = state.selectedFrames[0] + totalFrames;
-
-  for (let i = 0; i < totalFrames; i++) {
-    const currentFrame = startingFrame + i;
-
-    for (const led of selectedLeds) {
-      if (state.scene.frames[currentFrame] === undefined) {
-        state.scene.frames[currentFrame] = {
-          ledStates: {},
-        };
-      }
-
-      const percent = i / totalFrames;
-      const r = Math.floor(fromR + (toR - fromR) * percent);
-      const g = Math.floor(fromG + (toG - fromG) * percent);
-      const b = Math.floor(fromB + (toB - fromB) * percent);
-
-      state.scene.frames[currentFrame].ledStates[led] = { r, g, b };
-    }
-  }
-
   return state;
 }
 
@@ -709,7 +687,7 @@ export function getPrimarySelectedLedState(state: State): LedState {
     state.currentTool.type === "select"
       ? state.currentTool.selectedLed || ""
       : "";
-  const primarySelectedFrame = state.selectedFrames[0] ?? 0;
+  const primarySelectedFrame = state.currentFrame ?? 0;
   return (
     state.scene.frames[primarySelectedFrame].ledStates[primarySelectedLED] ??
     defaultLedState

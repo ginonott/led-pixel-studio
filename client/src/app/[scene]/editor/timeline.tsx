@@ -15,12 +15,14 @@ function CaretDiv() {
 
 function Frame({
   frame,
+  frameNumber,
   isPrimarySelected,
   isSecondarySelected,
   selectedLeds,
   onClick,
 }: {
   frame: FrameType;
+  frameNumber: number;
   isPrimarySelected: boolean;
   isSecondarySelected: boolean;
   selectedLeds: string[];
@@ -45,6 +47,7 @@ function Frame({
         className={`rounded-full w-4 h-4`}
         style={{ backgroundColor: dotColor }}
       />
+      <div>{frameNumber}</div>
     </div>
   );
 }
@@ -98,6 +101,7 @@ export default function Timeline({
               )}
               <Frame
                 frame={frame}
+                frameNumber={indx}
                 isPrimarySelected={isPrimarySelected}
                 isSecondarySelected={secondarySelectedFrames.includes(indx)}
                 selectedLeds={selectedLeds}
