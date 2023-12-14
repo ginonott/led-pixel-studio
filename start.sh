@@ -5,7 +5,7 @@ cd server
 kill `cat server.pid`
 
 pip install -r requirements.txt
-FLASK_APP=studio.app.py nohup flask run -h 0.0.0.0 --reload &
+FLASK_APP=studio.app.py nohup flask run -h 0.0.0.0 &
 echo $! > server.pid
 
 cd ../client
