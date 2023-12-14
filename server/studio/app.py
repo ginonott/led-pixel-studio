@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request
 from json import dumps, loads
 from flask_socketio import SocketIO
 from .scene_player import ScenePlayer
+from .models import Frame
 
 app = Flask(__name__)
 player = ScenePlayer()
@@ -254,6 +255,7 @@ def handle_init_realtime_event(json):
 
 @socketio.on("set_frame")
 def handle_set_leds_event(json):
+    frame: Frame = json["frame"]
     player.set_leds(json["leds"])
 
 

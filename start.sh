@@ -18,8 +18,9 @@ cd ../
 sleep 30
 
 # preload the home page
-curl 0.0.0.0:3000 &
-curl 0.0.0.0:3000/8/editor &
+# redirect output to devnull
+curl 0.0.0.0:3000 > /dev/null &
+curl 0.0.0.0:3000/8/editor > /dev/null &
 
 # tail the client and server logs
 tail client/nohup.out server/nohup.out
