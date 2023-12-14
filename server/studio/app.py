@@ -1,4 +1,5 @@
 from collections import namedtuple
+from multiprocessing import current_process
 import sqlite3
 from flask import Flask, jsonify, request
 from json import dumps, loads
@@ -7,7 +8,7 @@ from .scene_player import ScenePlayer
 from .models import Frame
 
 app = Flask(__name__)
-player = ScenePlayer()
+player = None
 socketio = SocketIO(app, cors_allowed_origins="*", allow_unsafe_werkzeug=True)
 
 SceneQueryResult = namedtuple("Scene", ["id", "data"])
@@ -259,4 +260,7 @@ def handle_set_leds_event(json):
     player.set_frame(frame)
 
 
-init_db()
+if __name__ == "__main__":
+    player = ScenePlayer()
+    init_db()
+    app.run(host="0.0.0.0", port=5000, use_reloader=False)

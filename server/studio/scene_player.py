@@ -1,9 +1,8 @@
-from multiprocessing import Process, Queue, set_start_method
+from multiprocessing import Process, Queue
 from time import sleep
 from typing import Literal
 
 from studio.models import Frame, Scene
-
 
 try:
     import board
@@ -54,6 +53,19 @@ class SetFrameMessage(Message):
         self.frame = frame
 
 
+def _show_frame(pixels: neopixel.NeoPixel, frame: Frame):
+    pixels.fill((0, 0, 0))
+
+    for led_num in range(len(pixels)):
+        led_state = frame["ledStates"].get(str(led_num))
+        if led_state:
+            pixels[led_num] = (led_state["r"], led_state["g"], led_state["b"])
+        else:
+            pixels[led_num] = (0, 0, 0)
+
+    pixels.show()
+
+
 def _run_loop(queue: Queue):
     pixels = neopixel.NeoPixel(board.D10, 40, brightness=1, auto_write=False)
     frames: list[Frame] = []
@@ -81,13 +93,11 @@ def _run_loop(queue: Queue):
                 pixels[:] = message.leds
                 pixels.show()
             elif isinstance(message, SetFrameMessage):
-                playing = True
-                fps = 60
-                current_frame = 0
-                frames = [message.frame]
+                playing = False
+                _show_frame(pixels, message.frame)
 
         # animations
-        if not playing:
+        if not playing or len(frames) == 0:
             # sleep for a tiny bit just to not hog the CPU
             sleep(0.01)
             continue
@@ -97,16 +107,7 @@ def _run_loop(queue: Queue):
         if current_frame >= len(frames):
             current_frame = 0
 
-        pixels.fill((0, 0, 0))
-
-        for led_num in range(len(pixels)):
-            led_state = frame["ledStates"].get(str(led_num))
-            if led_state:
-                pixels[led_num] = (led_state["r"], led_state["g"], led_state["b"])
-            else:
-                pixels[led_num] = (0, 0, 0)
-
-        pixels.show()
+        _show_frame(pixels, frame)
 
         # sleep
         sleep(1 / fps)
@@ -129,7 +130,6 @@ class ScenePlayer:
         self._queue = Queue()
         self._current_scene = None
         self._is_playing = False
-        set_start_method("spawn")
         self._proc = Process(target=_run_loop, args=(self._queue,))
         self._proc.start()
 
