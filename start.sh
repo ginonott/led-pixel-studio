@@ -5,7 +5,7 @@ cd server
 pkill -f "flask"
 
 pip install -r requirements.txt
-FLASK_APP=studio.app.py nohup flask run -h 0.0.0.0 &
+nohup python -m studio.app &
 
 cd ../client
 pkill -f "next dev"
