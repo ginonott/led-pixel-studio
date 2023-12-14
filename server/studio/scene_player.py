@@ -65,7 +65,7 @@ def _show_frame(pixels: neopixel.NeoPixel, frame: Frame):
 
 
 def _run_loop(queue: Queue):
-    pixels = neopixel.NeoPixel(board.D10, 40, brightness=1, auto_write=False)
+    pixels = neopixel.NeoPixel(board.D18, 40, brightness=1, auto_write=False)
     frames: list[Frame] = []
     playing = False
     current_frame = 0
