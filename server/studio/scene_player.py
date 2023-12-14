@@ -47,7 +47,7 @@ def scene_loop(frames: list[Frame], fps: int):
         if cur_frame >= len(frames):
             cur_frame = 0
 
-        debug(f"showing frame {cur_frame}")
+        print(f"showing frame {cur_frame}")
         set_frame(frames[cur_frame], clear_previous=False)
 
         cur_frame += 1
