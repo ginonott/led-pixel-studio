@@ -14,6 +14,9 @@ nohup npm run dev &
 
 cd ../
 
+# give npm time to install and start
+sleep 30
+
 # preload the home page
 curl 0.0.0.0:3000 &
 
