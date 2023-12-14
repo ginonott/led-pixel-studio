@@ -2,14 +2,12 @@
 
 # start the server first so we can start asap
 cd server
-kill `cat server.pid`
+pkill -f "flask"
 
 pip install -r requirements.txt
 FLASK_APP=studio.app.py nohup flask run -h 0.0.0.0 &
-echo $! > server.pid
 
 cd ../client
-kill `cat client.pid`
+pkill -f "next dev"
 npm i
 nohup npm run dev &
-echo $! > client.pid

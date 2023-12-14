@@ -3,9 +3,10 @@ import sqlite3
 from flask import Flask, jsonify, request
 from json import dumps, loads
 from flask_socketio import SocketIO
-from .scene_player import player
+from .scene_player import ScenePlayer
 
 app = Flask(__name__)
+player = ScenePlayer()
 socketio = SocketIO(app, cors_allowed_origins="*", allow_unsafe_werkzeug=True)
 
 SceneQueryResult = namedtuple("Scene", ["id", "data"])
@@ -166,7 +167,22 @@ def delete_scene(scene_id):
 
 @app.route("/api/player", methods=["GET"])
 def get_scene_state():
-    return jsonify(player.get_status())
+    if scene := player.get_scene():
+        return jsonify(
+            {
+                "isPlaying": player.is_playing(),
+                "sceneId": scene.get("id"),
+                "scene": scene,
+            }
+        )
+
+    return jsonify(
+        {
+            "isPlaying": False,
+            "sceneId": None,
+            "scene": None,
+        }
+    )
 
 
 @app.route("/api/player/play", methods=["POST"])
@@ -233,14 +249,12 @@ def copy_scene(scene_id):
 # socket io
 @socketio.on("init_realtime")
 def handle_init_realtime_event(json):
-    player.init_realtime_player(
-        num_leds=json.get("leds", 1), brightness=json.get("brightness", 20)
-    )
+    pass
 
 
 @socketio.on("set_frame")
 def handle_set_leds_event(json):
-    player.set_live_frame(json.get("frame"))
+    player.set_leds(json["leds"])
 
 
 init_db()
