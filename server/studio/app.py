@@ -256,7 +256,7 @@ def handle_init_realtime_event(json):
 @socketio.on("set_frame")
 def handle_set_leds_event(json):
     frame: Frame = json["frame"]
-    player.set_leds(json["leds"])
+    player.set_frame(frame)
 
 
 init_db()
