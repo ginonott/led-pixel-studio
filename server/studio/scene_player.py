@@ -49,7 +49,7 @@ class SetLedsMessage(Message):
 
 
 def _run_loop(queue: Queue):
-    pixels = neopixel.NeoPixel(board.D10, 40, auto_write=False)
+    pixels = neopixel.NeoPixel(board.D10, 40, brightness=1, auto_write=False)
     frames: list[Frame] = []
     playing = False
     current_frame = 0
@@ -67,7 +67,6 @@ def _run_loop(queue: Queue):
                 current_frame = 0
                 frames = message.frames
                 fps = message.fps
-                pixels.brightness = message.brightness
             elif isinstance(message, SetLedsMessage):
                 current_frame = 0
                 frames = []
