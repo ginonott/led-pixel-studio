@@ -2,7 +2,7 @@ from multiprocessing import Process, Queue
 from time import sleep
 from typing import Literal
 
-from server.studio.models import Frame, Scene
+from studio.models import Frame, Scene
 
 
 try:
