@@ -17,7 +17,9 @@ BRIGHTNESS = float(os.environ.get("BRIGHTNESS", 1))
 
 REALTIME_SCENE_ID = -525
 
-pixels = neopixel.NeoPixel(board.D10, LEDS, brightness=BRIGHTNESS, auto_write=False)
+pixels = None
+if not pixels:
+    pixels = neopixel.NeoPixel(board.D10, LEDS, brightness=BRIGHTNESS, auto_write=False)
 
 
 def set_frame(frame: Frame, clear_previous=True):
