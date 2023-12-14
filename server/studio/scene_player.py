@@ -1,4 +1,4 @@
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, set_start_method
 from time import sleep
 from typing import Literal
 
@@ -129,6 +129,7 @@ class ScenePlayer:
         self._queue = Queue()
         self._current_scene = None
         self._is_playing = False
+        set_start_method("spawn")
         self._proc = Process(target=_run_loop, args=(self._queue,))
         self._proc.start()
 
