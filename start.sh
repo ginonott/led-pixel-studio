@@ -19,6 +19,7 @@ sleep 30
 
 # preload the home page
 curl 0.0.0.0:3000 &
+curl 0.0.0.0:3000/8/editor &
 
 # tail the client and server logs
 tail client/nohup.out server/nohup.out
