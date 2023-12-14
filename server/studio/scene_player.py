@@ -48,6 +48,12 @@ class SetLedsMessage(Message):
         self.leds = leds
 
 
+class SetFrameMessage(Message):
+    def __init__(self, frame: Frame):
+        super().__init__(type="set_frame")
+        self.frame = frame
+
+
 def _run_loop(queue: Queue):
     pixels = neopixel.NeoPixel(board.D10, 40, brightness=1, auto_write=False)
     frames: list[Frame] = []
@@ -68,11 +74,17 @@ def _run_loop(queue: Queue):
                 frames = message.frames
                 fps = message.fps
             elif isinstance(message, SetLedsMessage):
+                playing = False
                 current_frame = 0
                 frames = []
                 pixels.fill((0, 0, 0))
                 pixels[:] = message.leds
                 pixels.show()
+            elif isinstance(message, SetFrameMessage):
+                playing = True
+                fps = 60
+                current_frame = 0
+                frames = [message.frame]
 
         # animations
         if not playing:
@@ -81,7 +93,9 @@ def _run_loop(queue: Queue):
             continue
 
         frame = frames[current_frame]
-        current_frame += 1 if current_frame < len(frames) - 1 else 0
+        current_frame += 1
+        if current_frame >= len(frames):
+            current_frame = 0
 
         pixels.fill((0, 0, 0))
 
@@ -142,6 +156,11 @@ class ScenePlayer:
 
     def set_leds(self, leds: list[tuple[int, int, int]]):
         self._queue.put(SetLedsMessage(leds=leds))
+        self._current_scene = None
+        self._is_playing = False
+
+    def set_frame(self, frame: Frame):
+        self._queue.put(SetFrameMessage(frame=frame))
         self._current_scene = None
         self._is_playing = False
 

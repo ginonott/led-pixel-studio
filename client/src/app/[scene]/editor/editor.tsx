@@ -73,10 +73,6 @@ function Canvas({
       return;
     }
 
-    socket?.emit("init_realtime", {
-      leds: getNumberOfLeds(state),
-      brightness: state.scene.brightness,
-    });
     socket?.emit("set_frame", {
       frame: state.scene.frames[state.currentFrame],
     });
