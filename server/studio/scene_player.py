@@ -104,6 +104,13 @@ class ScenePlayer:
     _current_scene: Scene | None
     _is_playing: bool
 
+    def _check_process(self):
+        if self._proc.is_alive():
+            return
+
+        print(self._proc.exitcode)
+        raise RuntimeError("ScenePlayer process is not alive")
+
     def __init__(self):
         self._queue = Queue()
         self._current_scene = None
