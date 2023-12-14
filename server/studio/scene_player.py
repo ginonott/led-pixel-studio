@@ -1,5 +1,6 @@
 import os
 from multiprocessing import Process
+import sys
 from time import sleep
 from .models import Frame, Scene
 from .debug import debug
@@ -49,7 +50,7 @@ def scene_loop(frames: list[Frame], fps: int):
         if cur_frame >= len(frames):
             cur_frame = 0
 
-        print(f"showing frame {cur_frame}")
+        sys.stdout.write(f"\rPlaying frame {cur_frame} of {len(frames)}")
         set_frame(frames[cur_frame], clear_previous=False)
 
         cur_frame += 1
