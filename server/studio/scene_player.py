@@ -54,8 +54,6 @@ class SetFrameMessage(Message):
 
 
 def _show_frame(pixels: neopixel.NeoPixel, frame: Frame):
-    pixels.clear()
-
     for led_num in range(len(pixels)):
         led_state = frame["ledStates"].get(str(led_num))
         if led_state:
@@ -94,6 +92,7 @@ def _run_loop(queue: Queue):
                 pixels.show()
             elif isinstance(message, SetFrameMessage):
                 playing = False
+                pixels.clear()
                 _show_frame(pixels, message.frame)
 
         # animations
