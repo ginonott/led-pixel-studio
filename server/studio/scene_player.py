@@ -165,7 +165,6 @@ def _run_loop(inputQueue: Queue):
 
             if mode == "program":
                 run_program()
-
             else:
                 frame = frames[current_frame]
                 current_frame += 1
@@ -175,7 +174,7 @@ def _run_loop(inputQueue: Queue):
                 _show_frame(pixels, frame)
 
             # sleep
-            sleep(1 / max(fps, 1))
+            sleep(1 / fps)
     except Exception as e:
         save_error(e)
         raise e
