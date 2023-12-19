@@ -14,7 +14,6 @@ from flask_socketio import SocketIO
 from .scene_player import ScenePlayer
 from .models import Frame
 import studio.programs
-import debugpy
 
 app = Flask(__name__)
 player = None
@@ -301,4 +300,3 @@ if __name__ == "__main__":
     player = ScenePlayer()
     init_db()
     app.run(host="0.0.0.0", port=5000, use_reloader=False)
-    debugpy.listen(("0.0.0.0", 5678))

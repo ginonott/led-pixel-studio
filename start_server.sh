@@ -1,4 +1,5 @@
 #!/usr/bin/bash 
+sudo -E bash
 
 cd server
 pkill -f "studio.app"
