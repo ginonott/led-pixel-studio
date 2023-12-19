@@ -174,8 +174,9 @@ export function getPrograms() {
   return fetchIt<string[]>(`/programs`);
 }
 
-export function startProgram(program: string) {
-  return fetchIt(`/programs/${program}/start`, {
+export async function startProgram(program: string) {
+  await fetchIt(`/programs/${program}/start`, {
     method: "POST",
   });
+  revalidateHomepage();
 }
