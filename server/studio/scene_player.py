@@ -147,7 +147,7 @@ def _run_loop(inputQueue: Queue):
                     mode = "program"
                     program_module = importlib.import_module(message.program)
                     if hasattr(program_module, "setup"):
-                        program_module.setup()
+                        program_module.setup(pixels)
 
                     if hasattr(program_module, "fps"):
                         fps = program_module.fps
@@ -192,6 +192,7 @@ class ScenePlayer:
             return
 
         logger.error("RunLoop process is not alive. resetting...")
+        self.reset()
 
     def reset(self):
         if self._proc and self._proc.is_alive():

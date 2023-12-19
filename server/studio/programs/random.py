@@ -8,10 +8,6 @@ MAX_GROUPS_ON = 8
 fps = 1
 
 
-def setup():
-    pass
-
-
 def run(pixels):
     pixels.fill((0, 0, 0))
     groups_on = random.randint(MIN_GROUPS_ON, MAX_GROUPS_ON)

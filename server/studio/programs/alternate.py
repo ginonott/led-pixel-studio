@@ -7,7 +7,7 @@ fps = 1
 counter = 0
 
 
-def setup():
+def setup(pixels):
     global counter
     counter = 0
 
