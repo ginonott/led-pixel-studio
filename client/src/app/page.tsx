@@ -69,15 +69,6 @@ export default async function Home() {
       <Container border>
         <h2>Programs</h2>
         <div className="grid sm:grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="place-self-center">
-            <LinkIcon
-              href="programs/"
-              name="add"
-              text="New Program"
-              color="positive"
-              size="xxxl"
-            />
-          </div>
           {programs.map((program) => (
             <ProgramTile key={program} program={program} />
           ))}
