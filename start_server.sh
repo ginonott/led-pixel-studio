@@ -1,9 +1,8 @@
 #!/usr/bin/bash 
-sudo -E bash -c "
-cd server
-pkill -f "studio.app"
 
-pip install -r requirements.txt
-nohup python -m studio.app &
+cd server
+sudo pkill -f "studio.app"
+
+sudo pip install -r requirements.txt
+sudo nohup python -m studio.app &
 tail nohup.out
-"
