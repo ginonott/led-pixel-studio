@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
+
 const nextConfig = {
   staticPageGenerationTimeout: 1000,
   images: {
@@ -10,6 +12,11 @@ const nextConfig = {
         pathname: "/image/**",
       },
     ],
+  },
+  webpack: (config) => {
+    config.plugins.push(new MonacoWebpackPlugin());
+
+    return config;
   },
 };
 

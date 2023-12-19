@@ -46,10 +46,6 @@ input {
   margin: 4px;
 }
 
-.bounce {
-  animation: bounce 1s infinite;
-}
-
 * > * {
   user-select: none;
 }
@@ -71,4 +67,27 @@ input {
   background-color: rgba(25, 25, 25, 0.2);
   border-radius: 9999px;
   width: 2px;
+}
+
+.bounce-1 {
+  animation: bounce 3s infinite 0s ease-in-out;
+}
+
+.bounce-2 {
+  animation: bounce 3s infinite 0.5s ease-in-out;
+}
+
+.bounce-3 {
+  animation: bounce 3s infinite 1s ease-in-out;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  100% {
+    transform: translateY(0);
+  }
+  10% {
+    transform: translateY(-10%);
+  }
 }

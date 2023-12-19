@@ -1,3 +1,5 @@
+import importlib
+import logging
 from multiprocessing import Process, Queue
 from time import sleep
 from typing import Literal
@@ -12,12 +14,16 @@ except ImportError:
     import studio.stubs.board as board
     import studio.stubs.neopixel as neopixel
 
-Actions = Literal["play", "pause", "set_frames", "set_leds"]
+Actions = Literal[
+    "play", "pause", "set_frames", "set_leds", "stop", "terminate", "step_program"
+]
+Mode = Literal["scene", "program", "idle"]
+
+logger = logging.getLogger(__name__)
 
 
 class Message:
     type: Actions
-    data: list | dict
 
     def __init__(self, type: Actions):
         self.type = type
@@ -31,6 +37,11 @@ class PlayMessage(Message):
 class PauseMessage(Message):
     def __init__(self):
         super().__init__(type="play")
+
+
+class StopMessage(Message):
+    def __init__(self):
+        super().__init__(type="stop")
 
 
 class SetSceneMessage(Message):
@@ -53,6 +64,17 @@ class SetFrameMessage(Message):
         self.frame = frame
 
 
+class SetProgramMessage(Message):
+    def __init__(self, program: str):
+        super().__init__(type="set_program")
+        self.program = program
+
+
+class TerminateMessage(Message):
+    def __init__(self):
+        super().__init__(type="terminate")
+
+
 def _show_frame(pixels: neopixel.NeoPixel, frame: Frame):
     for led_num in range(len(pixels)):
         led_state = frame["ledStates"].get(str(led_num))
@@ -64,88 +86,161 @@ def _show_frame(pixels: neopixel.NeoPixel, frame: Frame):
     pixels.show()
 
 
-def _run_loop(queue: Queue):
+def _run_loop(inputQueue: Queue):
     pixels = neopixel.NeoPixel(board.D18, 40, brightness=1, auto_write=False)
+    mode: Literal["scene", "program", "idle"] = "scene"
     frames: list[Frame] = []
+
     playing = False
     current_frame = 0
     fps = 5
+    program_func = None
 
-    while True:
-        # check for messages
-        if not queue.empty():
-            message: Message = queue.get(block=False)
-            if isinstance(message, PlayMessage):
-                playing = True
-            elif isinstance(message, PauseMessage):
-                playing = False
-            elif isinstance(message, SetSceneMessage):
-                current_frame = 0
-                frames = message.frames
-                fps = message.fps
-            elif isinstance(message, SetLedsMessage):
-                playing = False
-                current_frame = 0
-                frames = []
-                pixels.clear()
-                pixels[:] = message.leds
-                pixels.show()
-            elif isinstance(message, SetFrameMessage):
-                playing = False
-                pixels.clear()
-                _show_frame(pixels, message.frame)
+    def full_reset():
+        nonlocal mode, playing, current_frame, frames, program_func
+        mode = "idle"
+        playing = False
+        current_frame = 0
+        frames = []
+        pixels.fill((0, 0, 0))
+        pixels.show()
+        program_func = None
 
-        # animations
-        if not playing or len(frames) == 0:
-            # sleep for a tiny bit just to not hog the CPU
-            sleep(0.01)
-            continue
+    def save_error(e: Exception):
+        logger.error(e)
 
-        frame = frames[current_frame]
-        current_frame += 1
-        if current_frame >= len(frames):
-            current_frame = 0
+    def run_program():
+        # a program consist of a python file that defines a function called
+        # "run" that returns a list of led states
+        nonlocal mode, pixels, program_func
+        program_func(pixels)
 
-        _show_frame(pixels, frame)
+    try:
+        while True:
+            # check for messages
+            if not inputQueue.empty():
+                message: Message = inputQueue.get(block=False)
+                logger.debug(f"handling message: {message}")
 
-        # sleep
-        sleep(1 / fps)
+                if isinstance(message, PlayMessage):
+                    playing = True
+                elif isinstance(message, PauseMessage):
+                    playing = False
+                elif isinstance(message, SetSceneMessage):
+                    mode = "scene"
+                    current_frame = 0
+                    frames = message.frames
+                    fps = message.fps
+                elif isinstance(message, SetLedsMessage):
+                    full_reset()
+                    mode = "scene"
+                    pixels[:] = message.leds
+                    pixels.show()
+                elif isinstance(message, SetFrameMessage):
+                    full_reset()
+                    mode = "scene"
+                    _show_frame(pixels, message.frame)
+                elif isinstance(message, TerminateMessage):
+                    break
+                elif isinstance(message, SetProgramMessage):
+                    full_reset()
+                    mode = "program"
+                    program_module = importlib.import_module(message.program)
+                    if hasattr(program_module, "setup"):
+                        program_module.setup()
+
+                    if hasattr(program_module, "fps"):
+                        fps = program_module.fps
+
+                    program_func = program_module.run
+
+                elif isinstance(message, StopMessage):
+                    full_reset()
+
+            # animations
+            if not playing or mode == "idle":
+                # sleep for a tiny bit just to not hog the CPU
+                sleep(0.01)
+                continue
+
+            if mode == "program":
+                run_program()
+
+            else:
+                frame = frames[current_frame]
+                current_frame += 1
+                if current_frame >= len(frames):
+                    current_frame = 0
+
+                _show_frame(pixels, frame)
+
+            # sleep
+            sleep(1 / max(fps, 1))
+    except Exception as e:
+        save_error(e)
+        raise e
 
 
 class ScenePlayer:
-    _proc: Process | None
-    _queue: Queue
-    _current_scene: Scene | None
-    _is_playing: bool
+    _proc: Process | None = None
+    _input_queue: Queue = Queue()
+    _current_scene: Scene | None = None
+    _current_program: str | None = None
+    _is_playing: bool = False
 
     def _check_process(self):
         if self._proc.is_alive():
             return
 
-        print(self._proc.exitcode)
-        raise RuntimeError("ScenePlayer process is not alive")
+        logger.error("RunLoop process is not alive. resetting...")
 
-    def __init__(self):
-        self._queue = Queue()
+    def reset(self):
+        if self._proc and self._proc.is_alive():
+            self._input_queue.put(TerminateMessage())
+            try:
+                self._proc.join(1.0)
+            except Exception:
+                if self._proc.is_alive():
+                    self._proc.kill()
+
+        self._input_queue = Queue()
         self._current_scene = None
         self._is_playing = False
-        self._proc = Process(target=_run_loop, args=(self._queue,))
+        self._proc = Process(target=_run_loop, args=(self._input_queue,))
         self._proc.start()
 
+    def clear(self):
+        self._check_process()
+
+        self._input_queue.put(StopMessage())
+        self._current_scene = None
+        self._current_program = None
+        self._is_playing = False
+
+    def __init__(self):
+        self.reset()
+
     def play(self):
-        self._queue.put(PlayMessage())
+        self._check_process()
+
+        self._input_queue.put(PlayMessage())
         self._is_playing = True
 
     def pause(self):
-        self._queue.put(PauseMessage())
+        self._check_process()
+
+        self._input_queue.put(PauseMessage())
         self._is_playing = False
 
     def play_scene(self, scene: Scene):
+        self._check_process()
         self.set_scene(scene)
         self.play()
 
     def set_scene(self, scene: Scene):
-        self._queue.put(
+        self._check_process()
+        self.clear()
+        self._input_queue.put(
             SetSceneMessage(
                 frames=scene.get("frames"),
                 fps=scene.get("fps"),
@@ -155,17 +250,38 @@ class ScenePlayer:
         self._current_scene = scene
 
     def set_leds(self, leds: list[tuple[int, int, int]]):
-        self._queue.put(SetLedsMessage(leds=leds))
-        self._current_scene = None
-        self._is_playing = False
+        self._check_process()
+        self.clear()
+
+        self._input_queue.put(SetLedsMessage(leds=leds))
 
     def set_frame(self, frame: Frame):
-        self._queue.put(SetFrameMessage(frame=frame))
-        self._current_scene = None
-        self._is_playing = False
+        self._check_process()
+        self.clear()
 
-    def is_playing(self):
-        return self._is_playing
+        self._input_queue.put(SetFrameMessage(frame=frame))
 
-    def get_scene(self):
-        return self._current_scene
+    def get_state(self):
+        self._check_process()
+
+        return {
+            "is_playing": self._is_playing,
+            "current_scene": self._current_scene,
+            "current_program": self._current_program,
+        }
+
+    def stop(self):
+        self._check_process()
+        self.clear()
+
+    def run_program(self, program_name: str):
+        self._check_process()
+        self.clear()
+
+        # ensure we can import it
+        name = "studio.programs." + program_name
+        importlib.import_module(name)
+
+        self._input_queue.put(SetProgramMessage(program=name))
+        self.play()
+        self._current_program = program_name

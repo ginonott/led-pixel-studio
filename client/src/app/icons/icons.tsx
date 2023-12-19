@@ -49,7 +49,9 @@ type Icons =
   | "arrow_selector_tool"
   | "brush"
   | "content_copy"
-  | "swap_vert";
+  | "swap_vert"
+  | "skip_next"
+  | "stop";
 
 function getSpanIconClass(icon: Icons) {
   if (
@@ -61,6 +63,8 @@ function getSpanIconClass(icon: Icons) {
         "brush",
         "content_copy",
         "swap_vert",
+        "skip_next",
+        "stop",
       ] as Icons[]
     ).includes(icon)
   ) {

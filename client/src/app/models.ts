@@ -20,8 +20,16 @@ export type Scene = {
   brightness: number;
 };
 
-export type CurrentScene = {
-  sceneId: string;
+export type Program = {
+  id: string;
+  name: string;
+  data: string;
+  fps: number;
+};
+
+export type PlayerState = {
+  scene?: Scene;
+  program?: string;
   isPlaying: boolean;
 };
 

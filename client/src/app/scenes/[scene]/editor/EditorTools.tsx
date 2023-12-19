@@ -15,7 +15,7 @@ import {
 import {
   playScene,
   saveScene,
-  stopScene,
+  stopPlayer,
   throttledSaveScene,
   throttledSetFrame,
 } from "@/app/api";

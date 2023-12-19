@@ -1,3 +1,10 @@
+import logging
+import subprocess
+
+logging.basicConfig(level=logging.DEBUG)
+root_logger = logging.getLogger()
+root_logger.addHandler(logging.FileHandler("logs.txt", mode="a"))
+
 from collections import namedtuple
 from multiprocessing import current_process
 import sqlite3
@@ -6,16 +13,18 @@ from json import dumps, loads
 from flask_socketio import SocketIO
 from .scene_player import ScenePlayer
 from .models import Frame
+import studio.programs
 
 app = Flask(__name__)
 player = None
 socketio = SocketIO(app, cors_allowed_origins="*", allow_unsafe_werkzeug=True)
 
 SceneQueryResult = namedtuple("Scene", ["id", "data"])
+logger = logging.getLogger(__name__)
 
 
 def init_db():
-    print("creating database")
+    logger.debug("creating database")
     con = sqlite3.connect("studio.db")
     cur = con.cursor()
     cur.execute(
@@ -29,6 +38,8 @@ def init_db():
         con.commit()
     except Exception:
         pass
+
+    logger.debug("database created")
 
 
 @app.after_request
@@ -74,6 +85,7 @@ def get_scenes(cur: sqlite3.Cursor) -> list[SceneQueryResult]:
     return scenes
 
 
+# SCENES CRUd
 @app.route("/api/scenes", methods=["GET"])
 def list_scenes():
     con = sqlite3.connect("studio.db")
@@ -137,26 +149,6 @@ def update_scene(scene_id):
     return jsonify({"id": scene_id})
 
 
-@app.route("/api/scenes/<int:scene_id>/lock", methods=["POST"])
-def lock_scene(scene_id):
-    con = sqlite3.connect("studio.db")
-    cur = con.cursor()
-
-    cur.execute("UPDATE scenes SET locked = 1 WHERE id = ?", (scene_id,)).fetchone()
-    con.commit()
-    return jsonify({})
-
-
-@app.route("/api/scenes/<int:scene_id>/unlock", methods=["POST"])
-def unlock_scene(scene_id):
-    con = sqlite3.connect("studio.db")
-    cur = con.cursor()
-
-    cur.execute("UPDATE scenes SET locked = 0 WHERE id = ?", (scene_id,)).fetchone()
-    con.commit()
-    return jsonify({})
-
-
 @app.route("/api/scenes/<int:scene_id>", methods=["DELETE"])
 def delete_scene(scene_id):
     con = sqlite3.connect("studio.db")
@@ -167,59 +159,15 @@ def delete_scene(scene_id):
     return jsonify({})
 
 
-@app.route("/api/player", methods=["GET"])
-def get_scene_state():
-    if scene := player.get_scene():
-        return jsonify(
-            {
-                "isPlaying": player.is_playing(),
-                "sceneId": scene.get("id"),
-                "scene": scene,
-            }
-        )
-
-    return jsonify(
-        {
-            "isPlaying": False,
-            "sceneId": None,
-            "scene": None,
-        }
-    )
-
-
-@app.route("/api/player/play", methods=["POST"])
-def play_scene():
+# SCENE Commands
+@app.route("/api/scenes/<int:scene_id>/play", methods=["POST"])
+def play_scene(scene_id):
     con = sqlite3.connect("studio.db")
     cur = con.cursor()
 
-    data = request.get_json()
-    scene_id = data["sceneId"]
     scene = get_scene_by_id(cur, scene_id)
     if scene:
         player.play_scene(scene.data)
-        return jsonify({})
-    else:
-        return jsonify({"error": "Scene not found"}), 404
-
-
-@app.route("/api/player/stop", methods=["POST"])
-def stop_scene():
-    player.stop_scene()
-    return jsonify({})
-
-
-@app.route("/api/player/show-frame", methods=["POST"])
-def show_frame():
-    con = sqlite3.connect("studio.db")
-    cur = con.cursor()
-
-    data = request.get_json()
-    scene_id = data["sceneId"]
-    frame_num = data["frameNum"]
-
-    scene = get_scene_by_id(cur, scene_id)
-    if scene:
-        player.show_frame(scene.data, frame_num)
         return jsonify({})
     else:
         return jsonify({"error": "Scene not found"}), 404
@@ -248,12 +196,100 @@ def copy_scene(scene_id):
         return jsonify({"error": "Scene not found"}), 404
 
 
-# socket io
-@socketio.on("init_realtime")
-def handle_init_realtime_event(json):
-    pass
+@app.route("/api/scenes/<int:scene_id>/lock", methods=["POST"])
+def lock_scene(scene_id):
+    con = sqlite3.connect("studio.db")
+    cur = con.cursor()
+
+    cur.execute("UPDATE scenes SET locked = 1 WHERE id = ?", (scene_id,)).fetchone()
+    con.commit()
+    return jsonify({})
 
 
+@app.route("/api/scenes/<int:scene_id>/unlock", methods=["POST"])
+def unlock_scene(scene_id):
+    con = sqlite3.connect("studio.db")
+    cur = con.cursor()
+
+    cur.execute("UPDATE scenes SET locked = 0 WHERE id = ?", (scene_id,)).fetchone()
+    con.commit()
+    return jsonify({})
+
+
+# PLAYER Controls
+@app.route("/api/player", methods=["GET"])
+def get_scene_state():
+    player_state = player.get_state()
+
+    return jsonify(
+        {
+            "isPlaying": player_state["is_playing"],
+            "scene": player_state["current_scene"],
+            "program": player_state["current_program"],
+        }
+    )
+
+
+@app.route("/api/player/play", methods=["POST"])
+def play():
+    player.play()
+    return jsonify({})
+
+
+@app.route("/api/player/pause", methods=["POST"])
+def pause():
+    player.pause()
+    return jsonify({})
+
+
+@app.route("/api/player/stop", methods=["POST"])
+def stop():
+    player.stop()
+    return jsonify({})
+
+
+@app.route("/api/player/show-frame", methods=["POST"])
+def show_frame():
+    con = sqlite3.connect("studio.db")
+    cur = con.cursor()
+
+    data = request.get_json()
+    scene_id = data["sceneId"]
+    frame_num = data["frameNum"]
+
+    scene = get_scene_by_id(cur, scene_id)
+    if scene:
+        player.show_frame(scene.data, frame_num)
+        return jsonify({})
+    else:
+        return jsonify({"error": "Scene not found"}), 404
+
+
+# PROGRAMS CRUD
+@app.route("/api/programs", methods=["GET"])
+def list_programs():
+    return jsonify(studio.programs.programs_list)
+
+
+# PROGRAM Commands
+@app.route("/api/programs/<program_name>/start", methods=["POST"])
+def start_program(program_name):
+    player.run_program(program_name)
+    return jsonify({})
+
+
+# LOGS
+@app.route("/api/logs", methods=["GET"])
+def get_logs():
+    try:
+        output = subprocess.run(["tail", "-n", "100", "logs.txt"], capture_output=True)
+        logs = output.stdout.decode("utf-8").split("\n")
+        return jsonify(logs)
+    except Exception:
+        return jsonify({"logs": []})
+
+
+# realtime events
 @socketio.on("set_frame")
 def handle_set_leds_event(json):
     frame: Frame = json["frame"]

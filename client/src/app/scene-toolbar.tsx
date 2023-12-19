@@ -26,7 +26,7 @@ export default function SceneToolbar({
       <IconButton
         name="edit"
         onClick={() => {
-          router.push(`/${scene.id}/editor`);
+          router.push(`/scenes/${scene.id}/editor`);
         }}
       />
       <IconButton

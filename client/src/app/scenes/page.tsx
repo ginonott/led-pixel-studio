@@ -1,4 +1,4 @@
-import SceneEditor from "./editor/page";
+import SceneEditor from "./[scene]/editor/page";
 
 export default function Page() {
   return <SceneEditor params={{ scene: "__new" }} />;

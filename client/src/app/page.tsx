@@ -1,61 +1,60 @@
-import { getCurrentScene, getScenes } from "./api";
+import { getPlayerState, getPrograms, getScenes } from "./api";
 import { Container } from "./components";
-import { Icon, LinkIcon } from "./icons/icons";
-import SceneControls from "./scene-controls";
-import SceneToolbar from "./scene-toolbar";
-import SpotifyLogin from "./spotify-login";
+import { LinkIcon } from "./icons/icons";
+import ProgramTile from "./program-tile";
+import PlayerControls from "./player-controls";
+import SceneTile from "./scene-tile";
 
 const Header = () => {
   return (
-    <div className="flex flex-row justify-between">
-      <h1 className="text-6xl">
-        <span className="text-red-500 animate-bounce">L</span>
-        <span className="text-green-500">E</span>
-        <span className="text-blue-500">D</span> Pixel Studio
-      </h1>
-      <div>
-        <SpotifyLogin />
+    <h1 className="text-6xl flex flex-row flex-wrap justify-center">
+      <div className="flex flex-row md:mr-4">
+        <div className="text-red-500 bounce-1">L</div>
+        <div className="text-green-500 bounce-2">E</div>
+        <div className="text-blue-500 bounce-3">D</div>
       </div>
-    </div>
+      <div className="text-center">Pixel Studio</div>
+    </h1>
   );
 };
 
 async function getData() {
-  const [currentScene, scenes] = await Promise.all([
-    getCurrentScene(),
+  const [playerState, scenes, programs] = await Promise.all([
+    getPlayerState(),
     getScenes(),
+    getPrograms(),
   ]);
 
   return {
-    currentScene: {
-      ...currentScene,
-      scene: scenes.find((scene) => scene.id === currentScene.sceneId),
-    },
+    scene: playerState.scene,
+    program: playerState.program,
     scenes,
+    programs,
   };
 }
 
 export default async function Home() {
-  const { currentScene, scenes } = await getData();
+  const { scene, program, scenes, programs } = await getData();
 
   return (
-    <main className="flex min-h-screen flex-col p-24">
+    <main className="flex min-h-screen flex-col sm:p-4 lg:p-24">
       <Header />
       <Container border>
-        <h1>
-          {currentScene.scene
-            ? currentScene.scene.name ||
-              `Untitled Scene ${currentScene.sceneId}`
-            : "No Scene Set"}
-        </h1>
-        {currentScene?.scene && <SceneControls scene={currentScene.scene} />}
+        {scene ? (
+          <h2>Playing Scene: {scene.name || `Untitled Scene ${scene.id}`}</h2>
+        ) : program ? (
+          <h2>Playing Program: {program}</h2>
+        ) : (
+          <h2>Not Playing</h2>
+        )}
+        <PlayerControls scene={scene} />
       </Container>
-      <Container>
+      <Container border>
         <h2>Scenes</h2>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-1 md:grid-cols-4 gap-4">
           <div className="place-self-center">
             <LinkIcon
-              href="/editor"
+              href="scenes/"
               name="add"
               text="New Scene"
               color="positive"
@@ -63,15 +62,24 @@ export default async function Home() {
             />
           </div>
           {scenes.map((scene) => (
-            <Container key={scene.id} border>
-              <h3>{scene.name || `Untitled Scene ${scene.id}`}</h3>
-              <div>LEDs: {Object.keys(scene.ledPositions).length}</div>
-              <div>Frames: {scene.frames.length}</div>
-              <div>
-                Duration: {(scene.frames.length / scene.fps).toFixed(2)}s
-              </div>
-              <SceneToolbar scene={scene} />
-            </Container>
+            <SceneTile key={scene.id} scene={scene} />
+          ))}
+        </div>
+      </Container>
+      <Container border>
+        <h2>Programs</h2>
+        <div className="grid sm:grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="place-self-center">
+            <LinkIcon
+              href="programs/"
+              name="add"
+              text="New Program"
+              color="positive"
+              size="xxxl"
+            />
+          </div>
+          {programs.map((program) => (
+            <ProgramTile key={program} program={program} />
           ))}
         </div>
       </Container>

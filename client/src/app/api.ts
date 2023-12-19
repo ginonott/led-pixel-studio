@@ -1,5 +1,5 @@
 import { throttle } from "lodash";
-import { CurrentScene, Scene } from "./models";
+import { PlayerState, Scene } from "./models";
 import { revalidateTag } from "next/cache";
 import { io, Socket } from "socket.io-client";
 
@@ -53,18 +53,14 @@ export async function getScenes(): Promise<Scene[]> {
   return scenes;
 }
 
-export async function getCurrentScene(): Promise<CurrentScene> {
-  return fetchIt<CurrentScene>(`/player`);
+export async function getPlayerState(): Promise<PlayerState> {
+  return fetchIt<PlayerState>(`/player`);
 }
 
 export async function playScene(sceneId: string): Promise<void> {
-  await fetchIt(
-    `/player/play`,
-    {
-      method: "POST",
-    },
-    { sceneId }
-  );
+  await fetchIt(`/scenes/${sceneId}/play`, {
+    method: "POST",
+  });
 
   revalidateHomepage();
 }
@@ -104,8 +100,22 @@ export async function createScene(): Promise<{ id: string }> {
   return response;
 }
 
-export async function stopScene(): Promise<void> {
+export async function stopPlayer(): Promise<void> {
   await fetchIt(`/player/stop`, {
+    method: "POST",
+  });
+  revalidateHomepage();
+}
+
+export async function pausePlayer(): Promise<void> {
+  await fetchIt(`/player/pause`, {
+    method: "POST",
+  });
+  revalidateHomepage();
+}
+
+export async function resumePlayer(): Promise<void> {
+  await fetchIt(`/player/play`, {
     method: "POST",
   });
   revalidateHomepage();
@@ -158,4 +168,14 @@ export function getSocketConnection() {
   socket = new WeakRef(io(`ws://${getHostName()}`));
 
   return socket.deref();
+}
+
+export function getPrograms() {
+  return fetchIt<string[]>(`/programs`);
+}
+
+export function startProgram(program: string) {
+  return fetchIt(`/programs/${program}/start`, {
+    method: "POST",
+  });
 }

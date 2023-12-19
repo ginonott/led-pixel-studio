@@ -19,3 +19,10 @@ class Scene(TypedDict):
     fps: int
     brightness: float
     type: Literal["loop", "music"]
+
+
+class Program(TypedDict):
+    id: int
+    data: str
+    name: str
+    fps: int
