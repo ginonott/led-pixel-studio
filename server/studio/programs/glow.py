@@ -47,6 +47,8 @@ def run(pixels):
         for led in flatten(flatten(shelf_groups)):
             pixels[led] = transition_color(pixel_value, (0, 0, 0), step)
 
+        pixels.show()
+
         return
 
     # fade_to_color mode
@@ -67,3 +69,5 @@ def run(pixels):
     for led in leds:
         current_color = pixels[led]
         pixels[led] = transition_color(current_color, target_color, step)
+
+    pixels.show()
