@@ -1,5 +1,5 @@
 # settings
-fps = 5
+fps = 1
 
 # state
 counter = 0
