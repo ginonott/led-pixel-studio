@@ -1,7 +1,7 @@
 import random
 from . import groups
 
-MIN_COLOR_VALUE = 50
+MIN_COLOR_VALUE = 0
 MIN_GROUPS_ON = 4
 MAX_GROUPS_ON = 8
 
