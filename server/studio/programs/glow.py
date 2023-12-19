@@ -22,10 +22,18 @@ def flatten(iterable):
 def reset(pixels):
     global target_color, step, current_shelf, current_mode
     current_shelf = 0
-    target_color = (randint(0, 255), randint(0, 255), randint(0, 255))
     current_mode = "fade_to_color"
     pixels.fill((0, 0, 0))
     pixels.show()
+
+    # to avoid basically all white, we pick a more dominant color with a higher minimum
+    target_color = [randint(0, 50), randint(0, 50), randint(0, 50)]
+    dominant_color_pos = randint(0, 2)
+    target_color[dominant_color_pos] = randint(150, 255)
+
+    # make it readonly
+    target_color = tuple(target_color)
+
 
 
 def setup(pixels):
