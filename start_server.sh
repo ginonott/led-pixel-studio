@@ -1,8 +1,14 @@
 #!/usr/bin/bash 
 
-cd server
-sudo -E sh -c "pkill -f 'studio.app'"
+# check if root
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
 
-sudo -E sh -c "pip install -r requirements.txt"
-sudo -E sh -c "nohup python -m studio.app &"
+cd server
+pkill -f "studio.app"
+
+pip install -r requirements.txt
+nohup python -m studio.app &
 tail nohup.out
