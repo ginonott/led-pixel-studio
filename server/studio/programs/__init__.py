@@ -1,5 +1,6 @@
 import os
 import pathlib
+from random import randint
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 programs = pathlib.Path(dir_path).glob("*.py")
@@ -49,3 +50,12 @@ def transition_color(
         transition(from_[1], to[1], step),
         transition(from_[2], to[2], step),
     )
+
+
+def get_random_color():
+    target_color = [randint(0, 50), randint(0, 50), randint(0, 50)]
+    dominant_color_pos = randint(0, 2)
+    target_color[dominant_color_pos] = randint(150, 255)
+
+    # make it readonly
+    return tuple(target_color)
