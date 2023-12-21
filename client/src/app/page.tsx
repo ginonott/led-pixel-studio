@@ -68,7 +68,7 @@ export default async function Home() {
       </Container>
       <Container border>
         <h2>Programs</h2>
-        <div className="grid sm:grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid xs:grid-cols-1 md:grid-cols-4 gap-4">
           {programs.map((program) => (
             <ProgramTile key={program} program={program} />
           ))}

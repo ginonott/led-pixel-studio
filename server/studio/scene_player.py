@@ -77,11 +77,10 @@ class TerminateMessage(Message):
 
 def _show_frame(pixels: neopixel.NeoPixel, frame: Frame):
     for led_num in range(len(pixels)):
-        led_state = frame["ledStates"].get(str(led_num))
-        if led_state:
-            pixels[led_num] = (led_state["r"], led_state["g"], led_state["b"])
-        else:
-            pixels[led_num] = (0, 0, 0)
+        led_state = frame["ledStates"].get(str(led_num), {"r": 0, "g": 0, "b": 0})
+        rgb = (led_state["r"], led_state["g"], led_state["b"])
+        if tuple(pixels[led_num]) != rgb:
+            pixels[led_num] = rgb
 
     pixels.show()
 
