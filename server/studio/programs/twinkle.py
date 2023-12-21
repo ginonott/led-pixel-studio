@@ -2,14 +2,14 @@ from colour import Color
 from random import choice
 from . import groups
 
-fps = 5
+fps = 15
 
 # orangish color
 base_color = Color(rgb=(227/255, 165/255, 50/255))
 
-min_luminance = 0.1
-max_luminance = 0.8
-change_amt = 0.05
+min_luminance = 0.2
+max_luminance = 0.6
+change_amt = 0.01
 
 # because of float math errors, we want to work with the color object and not convert from float -> int -> float
 pixel_colors: list[Color] = []
