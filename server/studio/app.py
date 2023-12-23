@@ -277,6 +277,11 @@ def start_program(program_name):
     player.run_program(program_name)
     return jsonify({})
 
+@app.route("/api/sync-music", methods=["POST"])
+def sync_music():
+    player.sync_music()
+    return jsonify({})
+
 
 # LOGS
 @app.route("/api/logs", methods=["GET"])

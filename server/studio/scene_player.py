@@ -3,8 +3,12 @@ import logging
 from multiprocessing import Process, Queue
 from time import sleep
 from typing import Literal
+import numpy as np
+import sounddevice as sd
+import pyaudio
 
 from studio.models import Frame, Scene
+from .programs import transition_color
 
 try:
     import board
@@ -15,12 +19,11 @@ except ImportError:
     import studio.stubs.neopixel as neopixel
 
 Actions = Literal[
-    "play", "pause", "set_frames", "set_leds", "stop", "terminate", "step_program"
+    "play", "pause", "set_frames", "set_leds", "stop", "terminate", "step_program", "sync_music"
 ]
-Mode = Literal["scene", "program", "idle"]
+Mode = Literal["scene", "program", "idle", "music"]
 
 logger = logging.getLogger(__name__)
-
 
 class Message:
     type: Actions
@@ -74,6 +77,66 @@ class TerminateMessage(Message):
     def __init__(self):
         super().__init__(type="terminate")
 
+class SyncMusicMessage(Message):
+    def __init__(self):
+        super().__init__(type="sync_music")
+
+
+def normalize(data):
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
+
+sample_size = 1024
+bass_scale = 1
+vocal_scale = 1.5
+treble_scale = 1.2
+step = int(255 * .25)
+
+def sync_music(stream: sd.InputStream, pixels: neopixel.NeoPixel):
+    audio_data, _ = stream.read(sample_size)
+
+    if np.max(audio_data) < 0.0001:
+        current_color = pixels[0]
+        if tuple(current_color) != (0, 0, 0):
+            next_color = transition_color(current_color, (0, 0, 0), step)
+            pixels.fill(next_color)
+            pixels.show()
+        return
+
+    # get the frequencies
+    freq_data = np.fft.fft(audio_data)
+
+    # get amplitudes of each frequency
+    amplitudes = 1 / sample_size * np.abs(freq_data)
+
+    # split amplitudes into bass/vocals/treble
+    bass_amplitudes = normalize(amplitudes[:50])
+    vocals_amplitudes = normalize(amplitudes[100:500])
+    treble_amplitudes = normalize(amplitudes[500:])
+
+    # get the average volume of each frequency range
+    bass_volume = np.mean(bass_amplitudes)
+    vocals_volume = np.mean(vocals_amplitudes)
+    treble_volume = np.mean(treble_amplitudes)
+    color = (
+        min(int(bass_volume * 255 * bass_scale), 255),
+        min(int(vocals_volume * 255 * vocal_scale), 255),
+        min(int(treble_volume * 255 * treble_scale), 255),
+    )
+
+    # if significant bass volume, trigger LEDs
+    if bass_volume > 0.5:
+        pixels.fill(
+            color
+        )
+    else:
+        # fade to black
+        current_color = pixels[0]
+        if tuple(current_color) != (0, 0, 0):
+            next_color = transition_color(current_color, (0, 0, 0), step)
+            pixels.fill(next_color)
+
+    pixels.show()
+
 
 def _show_frame(pixels: neopixel.NeoPixel, frame: Frame):
     for led_num in range(len(pixels)):
@@ -87,8 +150,12 @@ def _show_frame(pixels: neopixel.NeoPixel, frame: Frame):
 
 def _run_loop(inputQueue: Queue):
     pixels = neopixel.NeoPixel(board.D18, 40, brightness=1, auto_write=False)
-    mode: Literal["scene", "program", "idle"] = "scene"
+    mode: Mode = "idle"
     frames: list[Frame] = []
+
+    # music stuff
+    audio_stream: sd.InputStream | None = None
+    channels = 1
 
     playing = False
     current_frame = 0
@@ -96,7 +163,7 @@ def _run_loop(inputQueue: Queue):
     program_func = None
 
     def full_reset():
-        nonlocal mode, playing, current_frame, frames, program_func
+        nonlocal mode, playing, current_frame, frames, program_func, fps
         mode = "idle"
         playing = False
         current_frame = 0
@@ -104,6 +171,22 @@ def _run_loop(inputQueue: Queue):
         pixels.fill((0, 0, 0))
         pixels.show()
         program_func = None
+        fps = 5
+
+        if audio_stream:
+            audio_stream.close()
+
+    def init_audio():
+        nonlocal audio_stream, fps, mode, channels, playing
+        mode = "music"
+        audio_stream = sd.InputStream(
+            device=0,
+            channels=1,
+            samplerate=48000
+        )
+        audio_stream.start()
+        fps = 60
+        playing = True
 
     def save_error(e: Exception):
         logger.error(e)
@@ -155,6 +238,9 @@ def _run_loop(inputQueue: Queue):
 
                 elif isinstance(message, StopMessage):
                     full_reset()
+                elif isinstance(message, SyncMusicMessage):
+                    full_reset()
+                    init_audio()
 
             # animations
             if not playing or mode == "idle":
@@ -164,6 +250,8 @@ def _run_loop(inputQueue: Queue):
 
             if mode == "program":
                 run_program()
+            elif mode == "music":
+                sync_music(audio_stream, pixels)
             else:
                 frame = frames[current_frame]
                 current_frame += 1
@@ -284,3 +372,9 @@ class ScenePlayer:
         self._input_queue.put(SetProgramMessage(program=name))
         self.play()
         self._current_program = program_name
+
+    
+    def sync_music(self):
+        self._check_process()
+        self.clear()
+        self._input_queue.put(SyncMusicMessage())
