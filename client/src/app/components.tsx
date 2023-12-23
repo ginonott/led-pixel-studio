@@ -80,11 +80,18 @@ export function Label({
   children,
   label,
   className = "",
-}: React.PropsWithChildren<{ label: string; className?: string }>) {
+  direction = "row",
+}: React.PropsWithChildren<{
+  label: string;
+  className?: string;
+  direction?: "row" | "col";
+}>) {
+  const flexDirection =
+    direction === "row"
+      ? "flex-row items-center justify-between"
+      : "flex-col flex-col-reverse";
   return (
-    <label
-      className={`flex flex-row items-center justify-between ${className}`}
-    >
+    <label className={`flex ${flexDirection} ${className}`}>
       {label}
       {children}
     </label>

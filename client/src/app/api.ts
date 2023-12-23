@@ -1,5 +1,5 @@
 import { throttle } from "lodash";
-import { PlayerState, Scene } from "./models";
+import { MusicSyncSettings, PlayerState, Scene } from "./models";
 import { revalidateTag } from "next/cache";
 import { io, Socket } from "socket.io-client";
 
@@ -179,4 +179,50 @@ export async function startProgram(program: string) {
     method: "POST",
   });
   revalidateHomepage();
+}
+
+export async function getMusicSyncSettings(): Promise<MusicSyncSettings> {
+  return fetchIt<{
+    activation_threshold: number;
+    transition_scale: number;
+    low_range_color_scale: number;
+    mid_range_color_scale: number;
+    high_range_color_scale: number;
+    low_range: number;
+    mid_range: number;
+  }>(`/sync-music/settings`).then((res) => ({
+    activationThreshold: res.activation_threshold,
+    transitionScale: res.transition_scale,
+    lowRangeColorScale: res.low_range_color_scale,
+    midRangeColorScale: res.mid_range_color_scale,
+    highRangeColorScale: res.high_range_color_scale,
+    lowRange: res.low_range,
+    midRange: res.mid_range,
+  }));
+}
+
+export async function setMusicSyncSettings(
+  settings: MusicSyncSettings
+): Promise<void> {
+  await fetchIt(
+    `/sync-music/settings`,
+    {
+      method: "PUT",
+    },
+    {
+      activation_threshold: settings.activationThreshold,
+      transition_scale: settings.transitionScale,
+      low_range_color_scale: settings.lowRangeColorScale,
+      mid_range_color_scale: settings.midRangeColorScale,
+      high_range_color_scale: settings.highRangeColorScale,
+      low_range: settings.lowRange,
+      mid_range: settings.midRange,
+    }
+  );
+}
+
+export async function syncMusic(): Promise<void> {
+  await fetchIt(`/sync-music`, {
+    method: "POST",
+  });
 }

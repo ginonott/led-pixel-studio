@@ -38,3 +38,13 @@ export type Frame = {
     [led: string]: LedState | undefined;
   };
 };
+
+export type MusicSyncSettings = {
+  activationThreshold: number;
+  transitionScale: number;
+  lowRangeColorScale: number;
+  midRangeColorScale: number;
+  highRangeColorScale: number;
+  lowRange: number;
+  midRange: number;
+};

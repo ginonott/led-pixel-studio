@@ -1,9 +1,15 @@
-import { getPlayerState, getPrograms, getScenes } from "./api";
+import {
+  getMusicSyncSettings,
+  getPlayerState,
+  getPrograms,
+  getScenes,
+} from "./api";
 import { Container } from "./components";
 import { LinkIcon } from "./icons/icons";
 import ProgramTile from "./program-tile";
 import PlayerControls from "./player-controls";
 import SceneTile from "./scene-tile";
+import MusicSyncSettings from "./music-sync-settings";
 
 const Header = () => {
   return (
@@ -19,10 +25,11 @@ const Header = () => {
 };
 
 async function getData() {
-  const [playerState, scenes, programs] = await Promise.all([
+  const [playerState, scenes, programs, musicSyncSettings] = await Promise.all([
     getPlayerState(),
     getScenes(),
     getPrograms(),
+    getMusicSyncSettings(),
   ]);
 
   return {
@@ -30,11 +37,13 @@ async function getData() {
     program: playerState.program,
     scenes,
     programs,
+    musicSyncSettings,
   };
 }
 
 export default async function Home() {
-  const { scene, program, scenes, programs } = await getData();
+  const { scene, program, scenes, programs, musicSyncSettings } =
+    await getData();
 
   return (
     <main className="flex min-h-screen flex-col sm:p-4 lg:p-24">
@@ -74,6 +83,7 @@ export default async function Home() {
           ))}
         </div>
       </Container>
+      <MusicSyncSettings settings={musicSyncSettings} />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 import localFont from "next/font/local";
 import Link from "next/link";
-import { HTMLAttributes } from "react";
+import { ButtonHTMLAttributes, HTMLAttributes } from "react";
 
 const MatieralOutlined = localFont({
   src: "./MaterialSymbolsOutlined.woff2",
@@ -51,7 +51,8 @@ type Icons =
   | "content_copy"
   | "swap_vert"
   | "skip_next"
-  | "stop";
+  | "stop"
+  | "graphic_eq";
 
 function getSpanIconClass(icon: Icons) {
   if (
@@ -65,6 +66,7 @@ function getSpanIconClass(icon: Icons) {
         "swap_vert",
         "skip_next",
         "stop",
+        "graphic_eq",
       ] as Icons[]
     ).includes(icon)
   ) {
@@ -186,14 +188,16 @@ export function Icon({
 export function IconButton({
   onClick,
   title,
+  buttonProps,
   ...props
 }: {
   onClick: HTMLAttributes<HTMLButtonElement>["onClick"];
   title?: string;
   text?: string;
+  buttonProps?: ButtonHTMLAttributes<HTMLButtonElement>;
 } & React.ComponentProps<typeof Icon>) {
   return (
-    <button onClick={onClick} title={title}>
+    <button {...buttonProps} onClick={onClick} title={title}>
       <Icon {...props} showHover />
     </button>
   );
