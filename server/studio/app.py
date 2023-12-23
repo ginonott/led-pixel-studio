@@ -321,7 +321,7 @@ def get_sync_music_settings():
         """
         select * from music_sync_settings WHERE id = 0;
         """).fetchone()
-    return jsonify(**{
+    return jsonify({
         key: settings[key]
         for key in settings.keys()
         if key != "id"
