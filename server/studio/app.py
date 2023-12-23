@@ -11,9 +11,10 @@ import sqlite3
 from flask import Flask, jsonify, request
 from json import dumps, loads
 from flask_socketio import SocketIO
-from .scene_player import ScenePlayer
+from .scene_player import MusicSyncSettings, ScenePlayer
 from .models import Frame
 import studio.programs
+from werkzeug.exceptions import BadRequest
 
 app = Flask(__name__)
 player = None
@@ -30,11 +31,45 @@ def init_db():
     cur.execute(
         "CREATE TABLE IF NOT EXISTS scenes (id INTEGER PRIMARY KEY, data JSON NOT NULL)"
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS music_sync_settings
+            (
+                id INTEGER PRIMARY KEY,
+                activation_threshold FLOAT NOT NULL,
+                transition_scale FLOAT NOT NULL,
+                low_range_color_scale FLOAT NOT NULL,
+                mid_range_color_scale FLOAT NOT NULL,
+                high_range_color_scale FLOAT NOT NULL,
+                low_range INTEGER NOT NULL,
+                mid_range INTEGER NOT NULL
+            )
+        """
+    )
     con.commit()
 
     try:
         cur = con.cursor()
         cur.execute("ALTER TABLE scenes ADD COLUMN locked INTEGER DEFAULT 0")
+        con.commit()
+    except Exception:
+        pass
+
+    try:
+        cur = con.cursor()
+        cur.execute(
+            """
+                INSERT INTO music_sync_settings (
+                    id,
+                    activation_threshold,
+                    transition_scale,
+                    low_range_color_scale,
+                    mid_range_color_scale,
+                    high_range_color_scale,
+                    low_range,
+                    mid_range
+                ) VALUES (0, 0.2, 0.2, 1.0, 1.0, 1.0, 50, 500)
+            """)
         con.commit()
     except Exception:
         pass
@@ -277,9 +312,68 @@ def start_program(program_name):
     player.run_program(program_name)
     return jsonify({})
 
+@app.route("/api/sync-music/settings", methods=["GET"])
+def get_sync_music_settings():
+    con = sqlite3.connect("studio.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    settings = cur.execute(
+        """
+        select * from music_sync_settings WHERE id = 0;
+        """).fetchone()
+    return jsonify(**{
+        key: settings[key]
+        for key in settings.keys()
+        if key != "id"
+    })
+
+@app.route("/api/sync-music/settings", methods=["PUT"])
+def set_sync_music_settings():
+    data = MusicSyncSettings(**request.get_json())
+
+    # some validations
+    if data.activation_threshold < 0 or data.activation_threshold > 1:
+        raise BadRequest("activation_threshold must be between 0 and 1")
+    
+    if data.low_range < 1 or data.low_range > 1024:
+        raise BadRequest("low_range must be between 0 and 1024")
+    
+    if data.mid_range < data.low_range or data.mid_range > 1024:
+        raise BadRequest("mid_range must be greater than low_range")
+    
+    con = sqlite3.connect("studio.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute(
+        """
+        UPDATE music_sync_settings SET
+            activation_threshold = ?,
+            transition_scale = ?,
+            low_range_color_scale = ?,
+            mid_range_color_scale = ?,
+            high_range_color_scale = ?,
+            low_range = ?,
+            mid_range = ?
+        WHERE id = 0;
+        """)
+    con.commit()
+    return jsonify({})
+
 @app.route("/api/sync-music", methods=["POST"])
 def sync_music():
-    player.sync_music()
+    con = sqlite3.connect("studio.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    settings = cur.execute(
+        """
+        select * from music_sync_settings WHERE id = 0;
+        """).fetchone()
+
+    player.sync_music(MusicSyncSettings(**{
+        key: settings[key]
+        for key in settings.keys()
+        if key != "id"
+    }))
     return jsonify({})
 
 
