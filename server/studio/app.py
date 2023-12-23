@@ -355,7 +355,15 @@ def set_sync_music_settings():
             low_range = ?,
             mid_range = ?
         WHERE id = 0;
-        """)
+        """, (
+            data.activation_threshold,
+            data.transition_scale,
+            data.low_range_color_scale,
+            data.mid_range_color_scale,
+            data.high_range_color_scale,
+            data.low_range,
+            data.mid_range
+        ))
     con.commit()
     return jsonify({})
 

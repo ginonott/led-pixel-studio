@@ -128,7 +128,7 @@ def sync_music(stream: sd.InputStream, pixels: neopixel.NeoPixel, music_sync_set
     treble_volume = np.mean(treble_amplitudes)
 
     # if significant bass volume, trigger LEDs
-    if bass_volume > 0.5:
+    if bass_volume > music_sync_settings.activation_threshold:
         color = (
             min(int(bass_volume * 255 * music_sync_settings.low_range_color_scale), 255),
             min(int(vocals_volume * 255 * music_sync_settings.mid_range_color_scale), 255),
@@ -187,6 +187,12 @@ def _run_loop(inputQueue: Queue):
 
     def init_audio(settings: MusicSyncSettings):
         nonlocal audio_stream, fps, mode, playing, music_sync_settings
+        if audio_stream:
+            try:
+                audio_stream.close()
+            except Exception:
+                pass
+
         mode = "music"
         audio_stream = sd.InputStream(
             device=0,
@@ -194,7 +200,7 @@ def _run_loop(inputQueue: Queue):
             samplerate=48000
         )
         audio_stream.start()
-        fps = 60
+        fps = 24
         playing = True
         music_sync_settings = settings
 
@@ -282,6 +288,7 @@ class ScenePlayer:
     _input_queue: Queue = Queue()
     _current_scene: Scene | None = None
     _current_program: str | None = None
+    _syncing_music: bool
     _is_playing: bool = False
 
     def _check_process(self):
@@ -303,6 +310,7 @@ class ScenePlayer:
         self._input_queue = Queue()
         self._current_scene = None
         self._is_playing = False
+        self._syncing_music = False
         self._proc = Process(target=_run_loop, args=(self._input_queue,))
         self._proc.start()
 
@@ -313,6 +321,7 @@ class ScenePlayer:
         self._current_scene = None
         self._current_program = None
         self._is_playing = False
+        self._syncing_music = False
 
     def __init__(self):
         self.reset()
@@ -382,9 +391,9 @@ class ScenePlayer:
         self._input_queue.put(SetProgramMessage(program=name))
         self.play()
         self._current_program = program_name
-
     
     def sync_music(self, settings: MusicSyncSettings):
         self._check_process()
         self.clear()
+        self._syncing_music = True
         self._input_queue.put(SyncMusicMessage(settings))
